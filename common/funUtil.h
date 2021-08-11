@@ -1,88 +1,22 @@
 #include "constants.h"
 
-// *** Initialization ***
-TH3D* hPosMu3DMthEff;
-TH3D* hNegMu3DMthEff;
-TH3D* hPosMu3DTrigEff;
-TH3D* hNegMu3DTrigEff;
-// **********************
-
-//// Details of matrixIdx can be found in the analysis note
-//const Int_t matrixIdx[nNeus][nNeus] = {
-//    {0, 1, 3},
-//    {2, 5, 6},
-//    {4, 7, 8}
-//};
-
-//const Int_t nSces = 9;
-//Double_t    corrMatrix[nSces][nSces];
-
 TF1 *funPtMeanShift;
 TF1 *funRawPtRes;
 TF1 *funTunedPtRes;
 
-// selType represents the dissociative event selection criteria in zerobias sample
-//Bool_t init(TString selType="Default"){
 Bool_t init(){
-    TFile *fRawPtRes = TFile::Open("/Users/syang/work/run2/upcJpsi/ptSmear/rawPtRes/ptRes/rawPtRes.root");
+    TFile *fRawPtRes = TFile::Open("/Users/syang/work/run2/upcJpsi/jpsiAnaCode/common/rawPtRes.root");
     funPtMeanShift = (TF1 *)fRawPtRes->Get("funPtMeanShift");
     funRawPtRes = (TF1 *)fRawPtRes->Get("funRawPtRes");
 
     funTunedPtRes = new TF1("funTunedPtRes", "sqrt([0]*[0]/x/x+[1]*[1])", 0, 5);
     funTunedPtRes->SetParameters(mPar0, funRawPtRes->GetParameter(1));
 
-    //TFile *fEff = TFile::Open("/Users/syang/work/run2/upcDimuon/simulation/effPlots_GammaGamma/3DMthEffAndTrigEff.root");
-    ////TFile *fEff = TFile::Open("/Users/syang/work/run2/upcDimuon/simulation/effPlots_GammaGamma_woVtxAndNtkHPSel/3DMthEffAndTrigEff.root");
-    //if(!fEff->IsOpen()){
-    //    cout<<"Failed to open 3-D single efficiencies !"<<endl;
-    //    return kFALSE;
-    //}
-    //else{
-    //    hPosMu3DMthEff  = (TH3D *)fEff->Get("hPosMu3DMthEff");
-    //    hNegMu3DMthEff  = (TH3D *)fEff->Get("hNegMu3DMthEff");
-    //    hPosMu3DTrigEff = (TH3D *)fEff->Get("hPosMu3DTrigEff");
-    //    hNegMu3DTrigEff = (TH3D *)fEff->Get("hNegMu3DTrigEff");
-
-    //    //hPosMu3DMthEff  = (TH3D *)fEff->Get("hPosMu3DMthEff_RebPhi");
-    //    //hNegMu3DMthEff  = (TH3D *)fEff->Get("hNegMu3DMthEff_RebPhi");
-    //    //hPosMu3DTrigEff = (TH3D *)fEff->Get("hPosMu3DTrigEff_RebPhi");
-    //    //hNegMu3DTrigEff = (TH3D *)fEff->Get("hNegMu3DTrigEff_RebPhi");
-    //}
-
-    //memset(corrMatrix, 0, sizeof(corrMatrix));
-
-    //ifstream inData(Form("/Users/syang/work/run2/upcDimuon/zerobias/corrMatrix_%s.dat", selType.Data()));
-    //if(!inData.is_open()){
-    //    cout<<"Failed to open correction matrix data !"<<endl;
-    //}
-
-    //Int_t icount=0;
-    //Double_t ele;
-    //while(inData>>ele){
-    //    Int_t iraw = icount/nSces;
-    //    Int_t icol = icount%nSces;
-
-    //    corrMatrix[iraw][icol] = ele;
-
-    //    icount++;
-    //}
-
-    //for(Int_t i=0; i<nSces; i++){
-    //    for(Int_t j=0; j<nSces; j++){
-    //        cout<< std::right << setw(15) << corrMatrix[i][j];
-    //    }
-    //    cout<<endl;
-    //}
-
     return kTRUE;
 }
 
 Double_t trigAcc(Double_t *x, Double_t *par){
     par = NULL;
-
-    //const Int_t nPts = 10;
-    //Double_t mEta[nPts] = {-2.4, -2.1, -1.6, -1.4, -1.0, 1.0, 1.4, 1.6, 2.1, 2.4};
-    //Double_t mPt[nPts]  = { 1.2,  1.2,  2.1,  2.1,  3.3, 3.3, 2.1, 2.1, 1.2, 1.2};
 
     const Int_t nPts = 14;
     Double_t mEta[nPts] = {-2.4, -2.1, -1.65, -1.45, -1.1, -0.3, -0.3,  0.3, 0.3, 1.1, 1.45, 1.65, 2.1, 2.4};
