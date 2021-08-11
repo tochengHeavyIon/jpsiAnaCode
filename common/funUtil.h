@@ -5,7 +5,10 @@ TF1 *funRawPtRes;
 TF1 *funTunedPtRes;
 
 Bool_t init(){
-    TFile *fRawPtRes = TFile::Open("/Users/syang/work/run2/upcJpsi/jpsiAnaCode/common/rawPtRes.root");
+    std::string cwd = gSystem->ExpandPathName(gSystem->pwd());
+    auto comDir = cwd.substr(0,cwd.find("jpsiAnaCode"))+"jpsiAnaCode/common/";
+
+    TFile *fRawPtRes = TFile::Open(Form("%s/rawPtRes.root", comDir.c_str()));
     funPtMeanShift = (TF1 *)fRawPtRes->Get("funPtMeanShift");
     funRawPtRes = (TF1 *)fRawPtRes->Get("funRawPtRes");
 

@@ -23,7 +23,6 @@
 
 
 !!! Please DO NOT change the relative directory paths in following steps !!!
-!!! Modify the absolute path of rawPtRes.root in jpsiAnaCode/common/funUtil.h according to your working place !!! (The rawPtRes.root is used in steps 4-2), 4-3), and 5-1), therefore, all the related settings are put in the constant.h and funUtil.h)
 
 
 # *** 2. DATA analysis ***
