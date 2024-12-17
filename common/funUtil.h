@@ -1,97 +1,149 @@
-#include "constants.h"
+#include "/Users/syang/work/run2/upcDimuon/common/constants.h"
 
-TF1 *funPtMeanShift;
-TF1 *funRawPtRes;
-TF1 *funTunedPtRes;
+// *** Initialization ***
+TH1D* hZDC[nDirs];
+TF1*  multiGaus[nDirs];
+TF1*  singleGaus[nDirs][nNeus-1];
 
-Bool_t init(){
-    std::string cwd = gSystem->ExpandPathName(gSystem->pwd());
-    auto comDir = cwd.substr(0,cwd.find("jpsiAnaCode"))+"jpsiAnaCode/common/";
+TH3D* hPosMu3DMthEff;
+TH3D* hNegMu3DMthEff;
+TH3D* hPosMu3DTrigEff;
+TH3D* hNegMu3DTrigEff;
 
-    TFile *fRawPtRes = TFile::Open(Form("%s/rawPtRes.root", comDir.c_str()));
-    funPtMeanShift = (TF1 *)fRawPtRes->Get("funPtMeanShift");
-    funRawPtRes = (TF1 *)fRawPtRes->Get("funRawPtRes");
+TH2D* hLumvsLSvsRun_UPC;
+TH2D* hLumvsLSvsRun_ZB;
+// **********************
 
-    funTunedPtRes = new TF1("funTunedPtRes", "sqrt([0]*[0]/x/x+[1]*[1])", 0, 5);
-    funTunedPtRes->SetParameters(mPar0, funRawPtRes->GetParameter(1));
+// Details of matrixIdx can be found in the analysis note
+const Int_t matrixIdx[nNeus][nNeus] = {
+    {0, 1, 3},
+    {2, 5, 6},
+    {4, 7, 8}
+};
+
+const Int_t nSces = 9;
+Double_t    corrMatrix[nSces][nSces];
+
+Bool_t init(TString hfVetoType="Default"){
+    TFile *fNeu = TFile::Open("/Users/syang/work/run2/upcDimuon/neuDecouple/neuDecouple/neutronDecouple.root");
+    if(!fNeu->IsOpen()){
+        cout<<"Failed to open neutronDecouple.root !"<<endl;
+        return kFALSE;
+    }
+    else{
+        for(Int_t idir = 0; idir < nDirs; idir++){
+            hZDC[idir]       = (TH1D *)fNeu->Get(Form("hZDC%s", mDir[idir].Data()));
+            multiGaus[idir]  = (TF1 *)fNeu->Get(Form("multiGaus_%s", mDir[idir].Data())); 
+
+            for(Int_t ineu = 0; ineu < nNeus - 1; ineu++){
+                singleGaus[idir][ineu]  = (TF1 *)fNeu->Get(Form("singleGaus_%s%d", mDir[idir].Data(), ineu));
+            }
+        }
+    }
+
+    TFile *fEff = TFile::Open("/Users/syang/work/run2/upcDimuon/simulation/effPlots_GammaGamma/3DMthEffAndTrigEff.root");
+    //TFile *fEff = TFile::Open("/Users/syang/work/run2/upcDimuon/simulation/effPlots_GammaGamma_woVtxAndNtkHPSel/3DMthEffAndTrigEff.root");
+    if(!fEff->IsOpen()){
+        cout<<"Failed to open 3-D single efficiencies !"<<endl;
+        return kFALSE;
+    }
+    else{
+        hPosMu3DMthEff  = (TH3D *)fEff->Get("hPosMu3DMthEff");
+        hNegMu3DMthEff  = (TH3D *)fEff->Get("hNegMu3DMthEff");
+        hPosMu3DTrigEff = (TH3D *)fEff->Get("hPosMu3DTrigEff");
+        hNegMu3DTrigEff = (TH3D *)fEff->Get("hNegMu3DTrigEff");
+
+        //hPosMu3DMthEff  = (TH3D *)fEff->Get("hPosMu3DMthEff_RebPhi");
+        //hNegMu3DMthEff  = (TH3D *)fEff->Get("hNegMu3DMthEff_RebPhi");
+        //hPosMu3DTrigEff = (TH3D *)fEff->Get("hPosMu3DTrigEff_RebPhi");
+        //hNegMu3DTrigEff = (TH3D *)fEff->Get("hNegMu3DTrigEff_RebPhi");
+    }
+
+    // For generating pileup matrix in Zero Bias data
+    TFile *fLumi_UPC = TFile::Open("/Users/syang/work/run2/upcDimuon/anaUPCLumi/InstantLumvsLSNbvsRunNb_singleMuUPC.root");
+    if(!fLumi_UPC->IsOpen()){
+        cout<<"Failed to open UPC instantaneous luminosity file !"<<endl;
+        return kFALSE;
+    }
+    else{
+        hLumvsLSvsRun_UPC = (TH2D *)fLumi_UPC->Get("hLumvsLSvsRun_UPC");
+    }
+
+    TFile *fLumi_ZB = TFile::Open("/Users/syang/work/run2/upcDimuon/anaZBLumi/InstantLumvsLSNbvsRunNb_ZeroBias.root");
+    if(!fLumi_ZB->IsOpen()){
+        cout<<"Failed to open Zero Bias instantaneous luminosity file !"<<endl;
+        return kFALSE;
+    }
+    else{
+        hLumvsLSvsRun_ZB = (TH2D *)fLumi_ZB->Get("hLumvsLSvsRun_ZB");
+    }
+
+    memset(corrMatrix, 0, sizeof(corrMatrix));
+
+    ifstream inData(Form("/Users/syang/work/run2/upcDimuon/zerobias/corrMatrix_%s.dat", hfVetoType.Data()));
+    if(!inData.is_open()){
+        cout<<"Failed to open correction matrix data !"<<endl;
+        return kFALSE;
+    }
+
+    Int_t icount=0;
+    Double_t ele;
+    while(inData>>ele){
+        Int_t iraw = icount/nSces;
+        Int_t icol = icount%nSces;
+
+        corrMatrix[iraw][icol] = ele;
+
+        icount++;
+    }
+
+    //for(Int_t i=0; i<nSces; i++){
+    //    for(Int_t j=0; j<nSces; j++){
+    //        cout<< std::right << setw(15) << corrMatrix[i][j];
+    //    }
+    //    cout<<endl;
+    //}
 
     return kTRUE;
 }
 
-Double_t trigAcc(Double_t *x, Double_t *par){
-    par = NULL;
+Double_t grabNeutronProb(Int_t dirIdx, Double_t zdc, Int_t neuNum)
+{
+    Int_t    binIdx     = hZDC[dirIdx]->GetXaxis()->FindBin(zdc);
+    Double_t binCenter  = hZDC[dirIdx]->GetXaxis()->GetBinCenter(binIdx);
+    Double_t binContent = hZDC[dirIdx]->GetBinContent(binIdx);
 
-    const Int_t nPts = 14;
-    Double_t mEta[nPts] = {-2.4, -2.1, -1.65, -1.45, -1.1, -0.3, -0.3,  0.3, 0.3, 1.1, 1.45, 1.65, 2.1, 2.4};
-    Double_t mPt[nPts]  = { 1.2,  1.2,  2.15,  2.15,  3.3,  3.3, 3.45, 3.45, 3.3, 3.3, 2.15, 2.15, 1.2, 1.2};
-
-    Int_t iseg = -1;
-    for(Int_t i=0; i<nPts-1; i++){
-        if(x[0]>=mEta[i] && x[0]<mEta[i+1]){
-            iseg = i;
-            break;
+    Double_t prob = -1;
+    if(neuNum == 0){
+        if(zdc<=mZdcFitLow[dirIdx]){
+            prob = (binContent - multiGaus[dirIdx]->Eval(binCenter)) / binContent;
+        }
+        else{
+            prob = 0;
         }
     }
-
-    if(x[0]==mEta[nPts-1]) iseg = nPts - 2;
-
-    if(iseg<0) return 999999.;
-
-    Double_t mSlope = (mPt[iseg+1] - mPt[iseg]) / (mEta[iseg+1] - mEta[iseg]);
-    Double_t mPtTh  = mSlope * (x[0] - mEta[iseg]) + mPt[iseg];
-
-    return mPtTh;
-}
-TF1 *fTrigAcc = new TF1("fTrigAcc", trigAcc, -2.5, 2.5, 0);
-
-Double_t trkAcc(Double_t *x, Double_t *par){
-    par = NULL;
-
-    const Int_t nPts = 10;
-    Double_t mEta[nPts] = {-2.4, -1.7,  -1.3, -1.3, -1.0, 1.0, 1.3,  1.3, 1.7, 2.4};
-    Double_t mPt[nPts]  = { 1.0,  1.0,  1.53,  2.1,  3.3, 3.3, 2.1, 1.53, 1.0, 1.0};
-
-    Int_t iseg = -1;
-    for(Int_t i=0; i<nPts-1; i++){
-        if(x[0]>=mEta[i] && x[0]<mEta[i+1]){
-            iseg = i;
-            break;
+    else if(neuNum == 1 || neuNum == 2){
+        if(zdc < mZdcFitLow[dirIdx] || zdc > mZdcFitHi[dirIdx]){
+            prob = singleGaus[dirIdx][neuNum-1]->Eval(binCenter) / binContent;
+        }
+        else{ // mZdcFitLow <= zdc <= mZdcFitHi using fit as denominator
+            prob = singleGaus[dirIdx][neuNum-1]->Eval(zdc) / multiGaus[dirIdx]->Eval(zdc);
         }
     }
-
-    if(x[0]==mEta[nPts-1]) iseg = nPts - 2;
-
-    if(iseg<0) return 999999.;
-
-    Double_t mSlope = (mPt[iseg+1] - mPt[iseg]) / (mEta[iseg+1] - mEta[iseg]);
-    Double_t mPtTh  = mSlope * (x[0] - mEta[iseg]) + mPt[iseg];
-
-    return mPtTh;
-}
-TF1 *fTrkAcc = new TF1("fTrkAcc", trkAcc, -2.5, 2.5, 0);
-
-Double_t oldTrkAcc(Double_t *x, Double_t *par){ // slightly tighter
-    par = NULL;
-
-    const Int_t nPts = 10;
-    Double_t mEta[nPts] = {-2.4, -1.7, -1.4, -1.4, -1.0, 1.0, 1.4, 1.4, 1.7, 2.4};
-    Double_t mPt[nPts]  = { 1.0,  1.0,  1.4,  2.1,  3.3, 3.3, 2.1, 1.4, 1.0, 1.0};
-
-    Int_t iseg = -1;
-    for(Int_t i=0; i<nPts-1; i++){
-        if(x[0]>=mEta[i] && x[0]<mEta[i+1]){
-            iseg = i;
-            break;
+    else if(neuNum == 3){
+        if(zdc < mZdcFitLow[dirIdx]){
+            prob = singleGaus[dirIdx][neuNum-1]->Eval(binCenter) / binContent;
+        }
+        else if(zdc > mZdcFitHi[dirIdx]){
+            prob = (binContent - singleGaus[dirIdx][0]->Eval(binCenter) - singleGaus[dirIdx][1]->Eval(binCenter)) / binContent;
+        }
+        else{ // mZdcFitLow <= zdc <= mZdcFitHi using fit as denominator
+            prob = (multiGaus[dirIdx]->Eval(zdc) - singleGaus[dirIdx][0]->Eval(zdc) - singleGaus[dirIdx][1]->Eval(zdc)) / multiGaus[dirIdx]->Eval(zdc);
         }
     }
+    else{
+        cout<<"The neutron number should be 0, 1, 2, 3"<<endl;
+    }
 
-    if(x[0]==mEta[nPts-1]) iseg = nPts - 2;
-
-    if(iseg<0) return 999999.;
-
-    Double_t mSlope = (mPt[iseg+1] - mPt[iseg]) / (mEta[iseg+1] - mEta[iseg]);
-    Double_t mPtTh  = mSlope * (x[0] - mEta[iseg]) + mPt[iseg];
-
-    return mPtTh;
+    return prob;
 }
-TF1 *fOldTrkAcc = new TF1("fOldTrkAcc", oldTrkAcc, -2.5, 2.5, 0);
