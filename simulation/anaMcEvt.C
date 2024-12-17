@@ -1,6 +1,6 @@
-#include "../common/headers.h"
-#include "../common/funUtil.h"
-#include "../common/VertexCompositeTree.h"
+#include "/Users/syang/Tools/Macro/headers.h"
+#include "/Users/syang/work/run2/upcDimuon/Utilities/Ntuple/VertexCompositeTree.h"
+#include "/Users/syang/work/run2/upcDimuon/common/funUtil.h"
 
 TH1D *hnEvts;
 TH3D *hVzvsVyvsVx;
@@ -9,12 +9,9 @@ TH3D *hNCanvsNtrkvsCen;
 TH2D *hNtrkofflinevsNtrkHP;
 
 TH3D *hPhivsEtavsPt_Gen;
-TH3D *hForward_PhivsEtavsPt_Gen;
 TH2D *hNegPtvsPosPt_Gen;
 TH2D *hNegEtavsPosEta_Gen;
 TH2D *hNegPhivsPosPhi_Gen;
-TH1D *hDeltaR;
-TH1D *hDeltaPt;
 TH2D *hPtResvsGenPt;
 TH2D *hEtaResvsGenEta;
 TH2D *hPhiResvsGenPhi;
@@ -26,21 +23,32 @@ TH2D *hRcPairPtvsGenPairPt;
 TH2D *hRcPairEtavsGenPairEta;
 TH2D *hRcPairPhivsGenPairPhi;
 TH2D *hMassResvsGenMass;
-TH2D *hPairPtResvsGenPairPt;
 TH2D *hRapResvsGenRap;
 
+TH3D *hRawMvsPtvsRap_Gen;
 TH3D *hMvsPtvsRap_Gen;
-TH3D *hMvsAsyPhivsRap_Gen;
+TH2D *hPt2vsM_Gen;
+TH2D *hAsyPhivsM_Gen;
+TH2D *hAsyPtvsM_Gen;
 TH2D *hDeltaPhivsM_Gen;
 
-TH3D *hMvsPtvsRap_woEvtSel_woSmear;
-TH3D *hMvsPtvsRap_woSmear;
+TH2D *hAsyPhivsPt_Gen;
+TH1D *hModifiedPairPt_Neu[nNeus][nNeus];
 
-TH3D *hMvsPtvsRap_woEvtSel;
 TH3D *hMvsPtvsRap;
-
 TH3D *hMvsAsyPhivsRap;
+TH2D *hPt2vsM;
+TH2D *hAsyPhivsM;
+TH2D *hAsyPhivsM_EffCorr;
+TH2D *hAsyPtvsM;
 TH2D *hDeltaPhivsM;
+
+TH3D *hPosMuPhivsEtavsPt;
+TH3D *hNegMuPhivsEtavsPt;
+
+TH2D *hTnpDenEtavsPt;
+TH2D *hTnpPassEtavsPt;
+TH2D *hTnpFailEtavsPt;
 
 // To calculate 3D efficiency
 TH3D *hPosMuPhivsEtavsPt_Gen;
@@ -58,29 +66,31 @@ TH3D *hTrigPosMuPhivsEtavsPtInpair;
 TH3D *hMthNegMuPhivsEtavsPtInpair;
 TH3D *hTrigNegMuPhivsEtavsPtInpair;
 
-Bool_t   goodMuPair(const TLorentzVector posFourMom, const Bool_t isPosTrig, const TLorentzVector negFourMom, const Bool_t isNegTrig);
-Bool_t   goodMuPair(VertexCompositeTree& evtTree, const int icand);
+Bool_t   goodMcTrack(VertexCompositeTree& evtTree, const int icand);
+Bool_t   goodRcTrack(VertexCompositeTree& evtTree, const int icand);
+Bool_t   matchedTrack(Double_t genPt, Double_t genEta, Double_t genPhi, Double_t rcPt, Double_t rcEta, Double_t rcPhi);
 Double_t shiftDeltaPhi(Double_t dPhi);
+Double_t shiftToPi(Double_t dPhi);
 
 void bookHistos();
 void writeHistos(TString fileName = "test");
 
-void anaMcEvt(TString fileName = "CohJpsi")
+void anaMcEvt(TString fileName = "GammaGamma")
 {
     TH1::SetDefaultSumw2(kTRUE);
 
     std::string inputFile;
-    if(fileName.EqualTo("LowMassGammaGamma"))     inputFile = "../rootfiles/VertexCompositeTree_STARLIGHT_LowMassGammaGammaToMuMu_GenFilter_DiMuMC_20200906.root";
-    else if(fileName.EqualTo("CohJpsi"))          inputFile = "../rootfiles/VertexCompositeTree_STARLIGHT_CohJpsiToMuMu_GenFilter_DiMuMC_20200906.root";
-    else if(fileName.EqualTo("CohJpsi_0n0n"))     inputFile = "../rootfiles/VertexCompositeTree_STARLIGHT_CohJpsiToMuMu_0n0n_GenFilter_DiMuMC_20210131.root";
-    else if(fileName.EqualTo("CohJpsi_0nXn"))     inputFile = "../rootfiles/VertexCompositeTree_STARLIGHT_CohJpsiToMuMu_0nXn_GenFilter_DiMuMC_20210131.root";
-    else if(fileName.EqualTo("CohJpsi_XnXn"))     inputFile = "../rootfiles/VertexCompositeTree_STARLIGHT_CohJpsiToMuMu_XnXn_GenFilter_DiMuMC_20210131.root";
-    else if(fileName.EqualTo("InCohJpsi"))        inputFile = "../rootfiles/VertexCompositeTree_STARLIGHT_InCohJpsiToMuMu_GenFilter_DiMuMC_20200906.root";
-    else if(fileName.EqualTo("CohPsi2S"))         inputFile = "../rootfiles/VertexCompositeTree_STARLIGHT_CohPsi2SToMuMu_GenFilter_DiMuMC_20200906.root";
-    else if(fileName.EqualTo("CohPsi2SFeeddown")) inputFile = "../rootfiles/VertexCompositeTree_STARLIGHT_CohPsi2SFeeddownToMuMu_GenFilter_DiMuMC_20201002.root";
-    else if(fileName.EqualTo("InCohPsi2S"))       inputFile = "../rootfiles/VertexCompositeTree_STARLIGHT_InCohPsi2SToMuMu_GenFilter_DiMuMC_20200906.root";
+    if(fileName.EqualTo("GammaGamma")){
+        inputFile = "../rootfiles/VertexCompositeTree_STARLIGHT_GGToMuMu_woPtCut_DiMuMC_20191122.root";
+    }
+    else if(fileName.EqualTo("GammaGamma_XnXn")){
+        inputFile = "../rootfiles/VertexCompositeTree_STARLIGHT_GGToMuMu_XnXn_woPtCut_DiMuMC_20191125.root";
+    }
+    else if(fileName.EqualTo("CohY1S")){
+        inputFile = "../rootfiles/VertexCompositeTree_STARLIGHT_Ups1SToMuMu_Coherent_wIF_woPtCut_DiMuMC_20191125.root";
+    }
     else{
-        cout<<"The filename string is wrong! Should be 'CohJpsi', 'CohJpsi_0n0n', 'CohJpsi_0nXn', 'CohJpsi_XnXn', 'InCohJpsi', 'CohPsi2S', 'CohPsi2SFeeddown', 'InCohPsi2S', OR 'LowMassGammaGamma' "<<endl;
+        cout<<"fileName is invalid !"<<endl;
         return;
     }
 
@@ -98,7 +108,25 @@ void anaMcEvt(TString fileName = "CohJpsi")
         return;
     }
 
+    TF1 *funSTARlight = new TF1("funSTARlight", "[0]*exp(-x/[1])", 0, 1);
+    funSTARlight->SetParameters(1, 1.3489e-3);
+
+    Double_t slopeData[nPts] = {0.00118441, 0.00131362, 0.00134486, 0.00140852, 0.00147138, 0.00155273};
+    TF1 *funData[nPts];
+    for(Int_t i=0; i<nPts; i++){
+        funData[i] = new TF1(Form("funData_Sce%d", i), "[0]*exp(-x/[1])", 0, 0.1);
+        funData[i]->SetParameters(1, slopeData[i]);
+        funData[i]->SetNpx(10000);
+    }
+
     bookHistos();
+
+    TRandom3 *rnd = new TRandom3(0);
+
+    vector<int> anaRuns;
+    vector<int> badZDCRuns;
+    anaRuns.clear();
+    badZDCRuns.clear();
 
     for (Long64_t jentry = 1; jentry < csTree.GetEntries(); jentry++) {
         if (jentry % (csTree.GetEntries() / 10) == 0)
@@ -126,9 +154,8 @@ void anaMcEvt(TString fileName = "CohJpsi")
         hNtrkofflinevsNtrkHP->Fill(nTrkHP, nTrkoffline);
 
         // Select Event - require this event has a valid vertex and is not beam-halo event
-        //if(!csTree.evtSel()[2] || !csTree.evtSel()[3]) continue;
-        Bool_t goodVtx = (csTree.evtSel()[2] && csTree.evtSel()[3]);
-        if(goodVtx) hnEvts->Fill(1.5);
+        if(!csTree.evtSel()[2] || !csTree.evtSel()[3]) continue;
+        hnEvts->Fill(1.5);
 
         //evtSel[4-15]
         //[4]=0: HFPlusMaxTower < 3 GeV;  [4]=1: HFPlusMaxTower > 3 GeV
@@ -140,15 +167,11 @@ void anaMcEvt(TString fileName = "CohJpsi")
         //[14] is for Plus & [15] is for Minus; Threshold = 8 GeV
         //[16] is for Plus (Th = 7.6 GeV) & [17] is for Minus (Th = 7.3 GeV); 
 
-        //if(csTree.evtSel()[16] || csTree.evtSel()[17]) continue;
-        Bool_t goodHFVeto = (!csTree.evtSel()[16] && !csTree.evtSel()[17]);
-        if(goodVtx & goodHFVeto) hnEvts->Fill(2.5);
+        if(csTree.evtSel()[16] || csTree.evtSel()[17]) continue;
+        hnEvts->Fill(2.5);
 
-        //if(nTrkHP != 2) continue;
-
-        Bool_t passEvtSel = goodVtx && goodHFVeto && (nTrkHP==2);
-
-        if(passEvtSel) hnEvts->Fill(3.5);
+        if(nTrkHP != 2) continue;
+        hnEvts->Fill(3.5);
 
         // Loop over the correct-sign candidates
         Int_t nSoftMuon = 0;
@@ -166,6 +189,61 @@ void anaMcEvt(TString fileName = "CohJpsi")
             hPosMuPhivsEtavsPt_Gen->Fill(posPt_gen, posEta_gen, posPhi_gen);
             hNegMuPhivsEtavsPt_Gen->Fill(negPt_gen, negEta_gen, negPhi_gen);
 
+            Int_t nPosMth = 0;
+            Int_t nNegMth = 0;
+            for(UInt_t imu=0; imu<csTree.candSize_mu(); imu++){
+                if(!csTree.softMuon_mu()[imu]) continue;
+
+                if(icand==0) nSoftMuon++;
+
+                Double_t muPt  = csTree.pT_mu()[imu];
+                Double_t muEta = csTree.eta_mu()[imu];
+                Double_t muPhi = csTree.phi_mu()[imu];
+                Bool_t   isTrigMu = csTree.trigMuon_mu()[trigIdx][imu];
+
+                if(matchedTrack(posPt_gen, posEta_gen, posPhi_gen, muPt, muEta, muPhi)){
+                    hPtResvsGenPt->Fill(posPt_gen, (muPt-posPt_gen)/posPt_gen);
+                    hEtaResvsGenEta->Fill(posEta_gen, muEta-posEta_gen);
+                    if(posPt_gen>mPtCut && TMath::Abs(posEta_gen)<mEtaCut){
+                        hPhiResvsGenPhi->Fill(posPhi_gen, muPhi-posPhi_gen);
+                    }
+
+                    hMthPosMuPhivsEtavsPt_Gen->Fill(posPt_gen, posEta_gen, posPhi_gen);
+                    hMthPosMuPhivsEtavsPt->Fill(muPt, muEta, muPhi);
+
+                    if(isTrigMu){
+                        hTrigPosMuPhivsEtavsPt->Fill(muPt, muEta, muPhi);
+                    }
+
+                    nPosMth++;
+                }
+
+                if(matchedTrack(negPt_gen, negEta_gen, negPhi_gen, muPt, muEta, muPhi)){
+                    hPtResvsGenPt->Fill(negPt_gen, (muPt-negPt_gen)/negPt_gen);
+                    hEtaResvsGenEta->Fill(negEta_gen, muEta-negEta_gen);
+                    if(negPt_gen>mPtCut && TMath::Abs(negEta_gen)<mEtaCut){
+                        hPhiResvsGenPhi->Fill(negPhi_gen, muPhi-negPhi_gen);
+                    }
+
+                    hMthNegMuPhivsEtavsPt_Gen->Fill(negPt_gen, negEta_gen, negPhi_gen);
+                    hMthNegMuPhivsEtavsPt->Fill(muPt, muEta, muPhi);
+
+                    if(isTrigMu){
+                        hTrigNegMuPhivsEtavsPt->Fill(muPt, muEta, muPhi);
+                    }
+
+                    nNegMth++;
+                }
+            }
+
+            if(nPosMth>1){
+                cout<<"More than 1 reconstructed tracks matched with positive generated track !"<<endl;
+            }
+
+            if(nNegMth>1){
+                cout<<"More than 1 reconstructed tracks matched with negative generated track !"<<endl;
+            }
+
             hNegPtvsPosPt_Gen->Fill(posPt_gen, negPt_gen);
             hNegEtavsPosEta_Gen->Fill(posEta_gen, negEta_gen);
             hNegPhivsPosPhi_Gen->Fill(posPhi_gen, negPhi_gen);
@@ -181,195 +259,150 @@ void anaMcEvt(TString fileName = "CohJpsi")
             Double_t mass_gen = pairFourMom_gen.M();
             Double_t y_gen    = pairFourMom_gen.Rapidity();
 
-            if(y_gen>1.5){
-                hForward_PhivsEtavsPt_Gen->Fill(posPt_gen, posEta_gen, posPhi_gen);
-                hForward_PhivsEtavsPt_Gen->Fill(negPt_gen, negEta_gen, negPhi_gen);
-            }
-
-            Double_t asyPhi_gen = 1 - TMath::Abs(shiftDeltaPhi(posFourMom_gen.DeltaPhi(negFourMom_gen))) / PI; //acoplanarity
+            Double_t asyPhi = 1 - TMath::Abs(shiftDeltaPhi(posFourMom_gen.DeltaPhi(negFourMom_gen))) / PI; //acoplanarity
+            Double_t asyPt  = TMath::Abs((posFourMom_gen.Pt() - negFourMom_gen.Pt()) / (posFourMom_gen.Pt() + negFourMom_gen.Pt()));
 
             TVector3 muMomDiff_gen = posFourMom_gen.Vect() - negFourMom_gen.Vect();
             TVector3 pairMom_gen = pairFourMom_gen.Vect();
             Double_t phiDiff_gen = shiftDeltaPhi(pairMom_gen.DeltaPhi(muMomDiff_gen));
 
-            hMvsPtvsRap_Gen->Fill(y_gen, pt_gen, mass_gen);
-            hMvsAsyPhivsRap_Gen->Fill(y_gen, asyPhi_gen, mass_gen);
-            hDeltaPhivsM_Gen->Fill(mass_gen, phiDiff_gen);
+            hRawMvsPtvsRap_Gen->Fill(y_gen, pt_gen, mass_gen);
 
-            Double_t posMthDeltaR = 99999999.;
-            Double_t negMthDeltaR = 99999999.;
-            Int_t    posRecoIdx = -1;
-            Int_t    negRecoIdx = -1;
-            for(UInt_t imu=0; imu<csTree.candSize_mu(); imu++){
-                if(!csTree.softMuon_mu()[imu]) continue;
+            if(goodMcTrack(csTree, icand) && TMath::Abs(y_gen) <= mPairYCut){
+                hMvsPtvsRap_Gen->Fill(y_gen, pt_gen, mass_gen);
+                hPt2vsM_Gen->Fill(mass_gen, pt_gen * pt_gen);
+                hAsyPhivsM_Gen->Fill(mass_gen, asyPhi);
+                hAsyPtvsM_Gen->Fill(mass_gen, asyPt);
+                hDeltaPhivsM_Gen->Fill(mass_gen, phiDiff_gen);
 
-                if(icand==0) nSoftMuon++;
+                if(mass_gen>=8 && mass_gen<=60){
+                    hAsyPhivsPt_Gen->Fill(posPt_gen, asyPhi);
 
-                Double_t muPt  = csTree.pT_mu()[imu];
-                Double_t muEta = csTree.eta_mu()[imu];
-                Double_t muPhi = csTree.phi_mu()[imu];
+                    Int_t neuIdx = 0;
 
-                TVector3 recoMom; recoMom.SetPtEtaPhi(muPt, muEta, muPhi);
-                Double_t posDeltaR = posFourMom_gen.Vect().DeltaR(recoMom);
-                Double_t negDeltaR = negFourMom_gen.Vect().DeltaR(recoMom);
+                    for(Int_t ip=0; ip<nNeus; ip++){
+                        for(Int_t im=ip; im<nNeus; im++){
+                            Double_t weight = funData[neuIdx]->Eval(asyPhi) / funSTARlight->Eval(asyPhi);
+                            hModifiedPairPt_Neu[ip][im]->Fill(pt_gen, weight);
 
-                // DeltaPt/genPt < 0.15 ensures to keep 99.9842% events
-                // DeltaR < 0.05 ensures to keep 99.9763% events
-                if(
-                        TMath::Abs((muPt-posPt_gen)/posPt_gen) < 0.15
-                        && posDeltaR < 0.05 
-                        && posDeltaR < posMthDeltaR
-                  ){
-                    posMthDeltaR = posDeltaR;
-                    posRecoIdx = imu;
-                }
-
-                if(
-                        TMath::Abs((muPt-negPt_gen)/negPt_gen) < 0.15
-                        && negDeltaR < 0.05
-                        && negDeltaR < negMthDeltaR
-                  ){
-                    negMthDeltaR = negDeltaR;
-                    negRecoIdx = imu;
+                            neuIdx++;
+                        }
+                    }
                 }
             }
 
-            if(posRecoIdx>=0 && negRecoIdx>=0 && posRecoIdx == negRecoIdx){
-                cout<<"One reco-track is matched to multiple gen-tracks !"<<endl;
-            }
+            Int_t recIdx = csTree.RecIdx_gen()[icand];
 
-            if(posRecoIdx>=0){
-                Double_t muPt  = csTree.pT_mu()[posRecoIdx];
-                Double_t muEta = csTree.eta_mu()[posRecoIdx];
-                Double_t muPhi = csTree.phi_mu()[posRecoIdx];
-                Bool_t   isTrigMu = csTree.trigMuon_mu()[trigIdx][posRecoIdx];
+            if(recIdx<0 || csTree.candSize()<=0) continue;
 
-                hDeltaR->Fill(posMthDeltaR);
-                hDeltaPt->Fill((muPt-posPt_gen)/posPt_gen);
+            Double_t posPt     = csTree.chargeD1()[recIdx] > 0 ? csTree.pTD1()[recIdx] : csTree.pTD2()[recIdx]; 
+            Double_t posEta    = csTree.chargeD1()[recIdx] > 0 ? csTree.EtaD1()[recIdx] : csTree.EtaD2()[recIdx]; 
+            Double_t posPhi    = csTree.chargeD1()[recIdx] > 0 ? csTree.PhiD1()[recIdx] : csTree.PhiD2()[recIdx]; 
+            Double_t posIsTrig = csTree.chargeD1()[recIdx] > 0 ? csTree.trigMuon1()[trigIdx][recIdx] : csTree.trigMuon2()[trigIdx][recIdx]; 
+            Double_t posIsSoft = csTree.chargeD1()[recIdx] > 0 ? csTree.softMuon1()[recIdx] : csTree.softMuon2()[recIdx]; 
+            Double_t negPt     = csTree.chargeD1()[recIdx] < 0 ? csTree.pTD1()[recIdx] : csTree.pTD2()[recIdx]; 
+            Double_t negEta    = csTree.chargeD1()[recIdx] < 0 ? csTree.EtaD1()[recIdx] : csTree.EtaD2()[recIdx]; 
+            Double_t negPhi    = csTree.chargeD1()[recIdx] < 0 ? csTree.PhiD1()[recIdx] : csTree.PhiD2()[recIdx]; 
+            Double_t negIsTrig = csTree.chargeD1()[recIdx] < 0 ? csTree.trigMuon1()[trigIdx][recIdx] : csTree.trigMuon2()[trigIdx][recIdx]; 
+            Double_t negIsSoft = csTree.chargeD1()[recIdx] < 0 ? csTree.softMuon1()[recIdx] : csTree.softMuon2()[recIdx]; 
 
-                hPtResvsGenPt->Fill(posPt_gen, (muPt-posPt_gen)/posPt_gen);
-                hEtaResvsGenEta->Fill(posEta_gen, muEta-posEta_gen);
-                hPhiResvsGenPhi->Fill(posPhi_gen, muPhi-posPhi_gen);
+            if (!csTree.softCand(recIdx)) continue;
 
-                hMthPosMuPhivsEtavsPt_Gen->Fill(posPt_gen, posEta_gen, posPhi_gen);
-                hMthPosMuPhivsEtavsPt->Fill(muPt, muEta, muPhi);
+            hMthPosMuPhivsEtavsPtInpair->Fill(posPt, posEta, posPhi);
+            if(posIsTrig) hTrigPosMuPhivsEtavsPtInpair->Fill(posPt, posEta, posPhi);
 
-                if(isTrigMu){
-                    hTrigPosMuPhivsEtavsPt->Fill(muPt, muEta, muPhi);
-                }
-            }
+            hMthNegMuPhivsEtavsPtInpair->Fill(negPt, negEta, negPhi);
+            if(negIsTrig) hTrigNegMuPhivsEtavsPtInpair->Fill(negPt, negEta, negPhi);
 
-            if(negRecoIdx>=0){
-                Double_t muPt  = csTree.pT_mu()[negRecoIdx];
-                Double_t muEta = csTree.eta_mu()[negRecoIdx];
-                Double_t muPhi = csTree.phi_mu()[negRecoIdx];
-                Bool_t   isTrigMu = csTree.trigMuon_mu()[trigIdx][negRecoIdx];
-
-                hDeltaR->Fill(negMthDeltaR);
-                hDeltaPt->Fill((muPt-negPt_gen)/negPt_gen);
-
-                hPtResvsGenPt->Fill(negPt_gen, (muPt-negPt_gen)/negPt_gen);
-                hEtaResvsGenEta->Fill(negEta_gen, muEta-negEta_gen);
-                hPhiResvsGenPhi->Fill(negPhi_gen, muPhi-negPhi_gen);
-
-                hMthNegMuPhivsEtavsPt_Gen->Fill(negPt_gen, negEta_gen, negPhi_gen);
-                hMthNegMuPhivsEtavsPt->Fill(muPt, muEta, muPhi);
-
-                if(isTrigMu){
-                    hTrigNegMuPhivsEtavsPt->Fill(muPt, muEta, muPhi);
-                }
-            }
-
-            Int_t recoIdx = csTree.RecIdx_gen()[icand];
-
-            if(recoIdx<0 || csTree.candSize()<=0) continue;
-
-            Double_t posPt     = csTree.chargeD1()[recoIdx] > 0 ? csTree.pTD1()[recoIdx] : csTree.pTD2()[recoIdx]; 
-            Double_t posEta    = csTree.chargeD1()[recoIdx] > 0 ? csTree.EtaD1()[recoIdx] : csTree.EtaD2()[recoIdx]; 
-            Double_t posPhi    = csTree.chargeD1()[recoIdx] > 0 ? csTree.PhiD1()[recoIdx] : csTree.PhiD2()[recoIdx]; 
-            Double_t isPosTrig = csTree.chargeD1()[recoIdx] > 0 ? csTree.trigMuon1()[trigIdx][recoIdx] : csTree.trigMuon2()[trigIdx][recoIdx]; 
-            Double_t negPt     = csTree.chargeD1()[recoIdx] < 0 ? csTree.pTD1()[recoIdx] : csTree.pTD2()[recoIdx]; 
-            Double_t negEta    = csTree.chargeD1()[recoIdx] < 0 ? csTree.EtaD1()[recoIdx] : csTree.EtaD2()[recoIdx]; 
-            Double_t negPhi    = csTree.chargeD1()[recoIdx] < 0 ? csTree.PhiD1()[recoIdx] : csTree.PhiD2()[recoIdx]; 
-            Double_t isNegTrig = csTree.chargeD1()[recoIdx] < 0 ? csTree.trigMuon1()[trigIdx][recoIdx] : csTree.trigMuon2()[trigIdx][recoIdx]; 
-
-            if(!csTree.softCand(recoIdx)) continue;
-
-            // shift mean
-            Double_t shiftPosPt = posPt - funPtMeanShift->Eval(posPt_gen)*posPt_gen;
-            Double_t shiftNegPt = negPt - funPtMeanShift->Eval(negPt_gen)*negPt_gen;
-
-            // smear width
-            Double_t posPtNew = posPt_gen + (shiftPosPt - posPt_gen)/funRawPtRes->Eval(posPt_gen)*funTunedPtRes->Eval(posPt_gen);
-            Double_t negPtNew = negPt_gen + (shiftNegPt - negPt_gen)/funRawPtRes->Eval(negPt_gen)*funTunedPtRes->Eval(negPt_gen);
-
-            hMthPosMuPhivsEtavsPtInpair->Fill(posPtNew, posEta, posPhi);
-            if(isPosTrig) hTrigPosMuPhivsEtavsPtInpair->Fill(posPtNew, posEta, posPhi);
-
-            hMthNegMuPhivsEtavsPtInpair->Fill(negPtNew, negEta, negPhi);
-            if(isNegTrig) hTrigNegMuPhivsEtavsPtInpair->Fill(negPtNew, negEta, negPhi);
-
-            TLorentzVector posFourMom, negFourMom, pairFourMom;
-            posFourMom.SetPtEtaPhiM(posPtNew, posEta, posPhi, Mmuon);
-            negFourMom.SetPtEtaPhiM(negPtNew, negEta, negPhi, Mmuon);
-            pairFourMom = posFourMom + negFourMom;
-            //cout<<"posPhi: "<<posPhi<<"   negPhi: "<<negPhi<<"    phiAngel:"<<posFourMom.DeltaPhi(negFourMom)<<endl;
-
-            // without pt smear
-            Double_t pt_woSmear   = csTree.pT()[recoIdx];
-            Double_t eta_woSmear  = csTree.eta()[recoIdx];
-            Double_t phi_woSmear  = csTree.phi()[recoIdx];
-            Double_t mass_woSmear = csTree.mass()[recoIdx];
-            Double_t y_woSmear    = csTree.y()[recoIdx];
-
-            // with pt smear
-            Double_t pt   = pairFourMom.Pt();
-            Double_t eta  = pairFourMom.Eta();
-            Double_t phi  = pairFourMom.Phi();
-            Double_t mass = pairFourMom.M();
-            Double_t y    = pairFourMom.Rapidity();
-            //cout<<"pt: "<<pt<<"   eta: "<<eta<<"   phi: "<<phi<<"   M: "<<mass<<"   y: "<<y<<endl;
+            Double_t pt   = csTree.pT()[recIdx];
+            Double_t eta  = csTree.eta()[recIdx];
+            Double_t phi  = csTree.phi()[recIdx];
+            Double_t mass = csTree.mass()[recIdx];
+            Double_t y    = csTree.y()[recIdx];
 
             hRcPairPtvsGenPairPt->Fill(pt_gen, pt);
             hRcPairEtavsGenPairEta->Fill(phi_gen, phi);
             hRcPairPhivsGenPairPhi->Fill(eta_gen, eta);
+
+            TLorentzVector posFourMom, negFourMom, pairFourMom;
+            posFourMom.SetPtEtaPhiM(posPt, posEta, posPhi, Mmuon);
+            negFourMom.SetPtEtaPhiM(negPt, negEta, negPhi, Mmuon);
+            pairFourMom = posFourMom + negFourMom;
+
+            //cout<<"pt_rc_read: "<<pt<<"    "<<"pt_rc_cal: "<<pairFourMom.Pt()<<endl;
+
+            asyPhi = 1 - TMath::Abs(shiftDeltaPhi(posFourMom.DeltaPhi(negFourMom))) / PI; //acoplanarity
+            asyPt  = TMath::Abs((posFourMom.Pt() - negFourMom.Pt()) / (posFourMom.Pt() + negFourMom.Pt()));
+
+            //if (!csTree.softCand(recIdx))              continue;
+            if (!goodRcTrack(csTree, recIdx))            continue;
+            if (!csTree.trigCand(trigIdx, recIdx, true)) continue; // true: single muon UPC; false: dimuon UPC
+            if (TMath::Abs(y) > mPairYCut)               continue;
+
             hMassResvsGenMass->Fill(mass_gen, (mass-mass_gen)/mass_gen);
-            hPairPtResvsGenPairPt->Fill(pt_gen, pt - pt_gen);
             hRapResvsGenRap->Fill(y_gen, y-y_gen);
 
-            Double_t asyPhi = 1 - TMath::Abs(shiftDeltaPhi(posFourMom.DeltaPhi(negFourMom))) / PI; //acoplanarity
-
-            // already required soft muon pair before
-
-            // without pt smear
-            if(goodMuPair(csTree, recoIdx)){
-                hMvsPtvsRap_woEvtSel_woSmear->Fill(y_woSmear, pt_woSmear, mass_woSmear);
-
-                if(passEvtSel){
-                    hMvsPtvsRap_woSmear->Fill(y_woSmear, pt_woSmear, mass_woSmear);
+            // NOTE, in the pair selection, at least one triggered muon has already been deposited
+            if(!posIsTrig){
+                hTnpDenEtavsPt->Fill(posPt, TMath::Abs(posEta));
+                hTnpFailEtavsPt->Fill(posPt, TMath::Abs(posEta));
+            }
+            if(!negIsTrig){
+                hTnpDenEtavsPt->Fill(negPt, TMath::Abs(negEta));
+                hTnpFailEtavsPt->Fill(negPt, TMath::Abs(negEta));
+            }
+            if(posIsTrig && negIsTrig){
+                Double_t rndNum = rnd->Uniform(-1, 1);
+                if(rndNum>0){ // positive muon is probe muon
+                    hTnpDenEtavsPt->Fill(posPt, TMath::Abs(posEta));
+                    hTnpPassEtavsPt->Fill(posPt, TMath::Abs(posEta));
+                }
+                else{ // negative muon is probe muon
+                    hTnpDenEtavsPt->Fill(negPt, TMath::Abs(negEta));
+                    hTnpPassEtavsPt->Fill(negPt, TMath::Abs(negEta));
                 }
             }
 
-            // with pt smear
-            if(!goodMuPair(posFourMom, isPosTrig, negFourMom, isNegTrig)) continue;
-            hMvsPtvsRap_woEvtSel->Fill(y, pt, mass);
+            if(
+                    mass>massLow[0] && mass<massHi[nMBins-1]
+                    && asyPhi<mAlphaCut
+              ){
+                hPosMuPhivsEtavsPt->Fill(posPt, posEta, posPhi);
+                hNegMuPhivsEtavsPt->Fill(negPt, negEta, negPhi);
+            }
 
-            if(!passEvtSel) continue;
             hMvsPtvsRap->Fill(y, pt, mass);
             hMvsAsyPhivsRap->Fill(y, asyPhi, mass);
+            hPt2vsM->Fill(mass, pt * pt);
+            hAsyPhivsM->Fill(mass, asyPhi);
+            hAsyPtvsM->Fill(mass, asyPt);
 
             TVector3 muMomDiff = posFourMom.Vect() - negFourMom.Vect();
             TVector3 pairMom = pairFourMom.Vect();
 
             Double_t phiDiff = shiftDeltaPhi(pairMom.DeltaPhi(muMomDiff));
             hDeltaPhivsM->Fill(mass, phiDiff);
+
+            Int_t posPtBin  = hPosMu3DMthEff->GetXaxis()->FindBin(posPt);
+            Int_t posEtaBin = hPosMu3DMthEff->GetYaxis()->FindBin(posEta);
+            Int_t posPhiBin = hPosMu3DMthEff->GetZaxis()->FindBin(posPhi);
+            Int_t negPtBin  = hNegMu3DMthEff->GetXaxis()->FindBin(negPt);
+            Int_t negEtaBin = hNegMu3DMthEff->GetYaxis()->FindBin(negEta);
+            Int_t negPhiBin = hNegMu3DMthEff->GetZaxis()->FindBin(negPhi);
+
+            if(posPtBin > hPosMu3DMthEff->GetNbinsX()) posPtBin = hPosMu3DMthEff->GetNbinsX();
+            if(negPtBin > hNegMu3DMthEff->GetNbinsX()) negPtBin = hNegMu3DMthEff->GetNbinsX();
+
+            Double_t trkEff = hPosMu3DMthEff->GetBinContent(posPtBin, posEtaBin, posPhiBin) * hNegMu3DMthEff->GetBinContent(negPtBin, negEtaBin, negPhiBin);
+            Double_t trigEff = 1 - (1 - hPosMu3DTrigEff->GetBinContent(posPtBin, posEtaBin, posPhiBin)) * (1 - hNegMu3DTrigEff->GetBinContent(negPtBin, negEtaBin, negPhiBin));
+            Double_t totEff = trkEff * trigEff;
+            hAsyPhivsM_EffCorr->Fill(mass, asyPhi, 1/totEff);
         }
 
         hNRcMuvsNGenMu->Fill(csTree.candSize_gen()*2, nSoftMuon);
     }
 
-    system("mkdir -p mcHistos");
-    writeHistos(Form("mcHistos/dimuonHistos.%s", fileName.Data()));
+    writeHistos(Form("dimuonHistos.%s", fileName.Data()));
 }
 
 void bookHistos()
@@ -377,15 +410,18 @@ void bookHistos()
     const Int_t    mHistRapBins = 60;
     const Double_t mHistRapLow = -3;
     const Double_t mHistRapHi = 3;
-    const Int_t    mHistPtBins = 400;
+    const Int_t    mHistPtBins = 200;
     const Double_t mHistPtLow = 0;
-    const Double_t mHistPtHi = 4;
-    const Int_t    mHistMassBins = 300;
-    const Double_t mHistMassLow = 2;
-    const Double_t mHistMassHi = 5;
-    const Int_t    mHistAsyPhiBins = 300;
+    const Double_t mHistPtHi = 1;
+    const Int_t    mHistMassBins = 2000;
+    const Double_t mHistMassLow = 0;
+    const Double_t mHistMassHi = 100;
+    const Int_t    mHistPt2Bins = 100;
+    const Double_t mHistPt2Low = 0;
+    const Double_t mHistPt2Hi = 0.1;
+    const Int_t    mHistAsyPhiBins = 500;
     const Double_t mHistAsyPhiLow = 0;
-    const Double_t mHistAsyPhiHi = 0.3;
+    const Double_t mHistAsyPhiHi = 0.05;
     const Int_t    mHistAsyPtBins = 500;
     const Double_t mHistAsyPtLow = 0;
     const Double_t mHistAsyPtHi = 0.5;
@@ -404,45 +440,63 @@ void bookHistos()
     hNCanvsNtrkvsCen = new TH3D("hNCanvsNtrkvsCen", "hNCanvsNtrkvsCen; Centrality; N_{trk}^{offline}; # CS pair", 50, 150, 200, 10, 0, 10, 5, 0, 5);
     hNtrkofflinevsNtrkHP = new TH2D("hNtrkofflinevsNtrkHP", "hNtrkofflinevsNtrkHP; N_{trk}^{HP}; N_{trk}^{offline}", 10, 0, 10, 10, 0, 10);
 
-    hPhivsEtavsPt_Gen   = new TH3D("hPhivsEtavsPt_Gen", "hPhivsEtavsPt_Gen; p_{T} (GeV/c); #eta; #phi", 500, 0, 5, 300, -3, 3, 180, -PI, PI);
-    hForward_PhivsEtavsPt_Gen   = new TH3D("hForward_PhivsEtavsPt_Gen", "hForward_PhivsEtavsPt_Gen; p_{T} (GeV/c); #eta; #phi", 500, 0, 5, 300, -3, 3, 180, -PI, PI);
-    hNegPtvsPosPt_Gen    = new TH2D("hNegPtvsPosPt_Gen", "hNegPtvsPosPt_Gen; #mu^{+} p_{T} (GeV/c); #mu^{-} p_{T} (GeV/c);", 500, 0, 5, 500, 0, 5);
+    hPhivsEtavsPt_Gen   = new TH3D("hPhivsEtavsPt_Gen", "hPhivsEtavsPt_Gen; p_{T} (GeV/c); #eta; #phi", 500, 0, 50, 300, -3, 3, 180, -PI, PI);
+    hNegPtvsPosPt_Gen    = new TH2D("hNegPtvsPosPt_Gen", "hNegPtvsPosPt_Gen; #mu^{+} p_{T} (GeV/c); #mu^{-} p_{T} (GeV/c);", 500, 0, 50, 500, 0, 50);
     hNegEtavsPosEta_Gen  = new TH2D("hNegEtavsPosEta_Gen", "hNegEtavsPosEta_Gen; #mu^{+} #eta; #mu^{-} #eta;", 300, -3, 3, 300, -3, 3);
     hNegPhivsPosPhi_Gen  = new TH2D("hNegPhivsPosPhi_Gen", "hNegPhivsPosPhi_Gen; #mu^{+} #phi; #mu^{-} #phi;", 180, -PI, PI, 180, -PI, PI);
-    hDeltaR              = new TH1D("hDeltaR", "hDeltaR; #DeltaR", 2000, 0, 0.2);
-    hDeltaPt             = new TH1D("hDeltaPt", "hDeltaPt; (p_{T}^{Rc}-p_{T}^{Gen})/p_{T}^{Gen}", 5000, -0.5, 0.5);
-    hPtResvsGenPt        = new TH2D("hPtResvsGenPt", "hPtResvsGenPt; p_{T}^{Gen} (GeV/c); (p_{T}^{Rc}-p_{T}^{Gen})/p_{T}^{Gen};", 500, 0, 5, 300, -0.15, 0.15);
+    hPtResvsGenPt        = new TH2D("hPtResvsGenPt", "hPtResvsGenPt; p_{T}^{Gen} (GeV/c); (p_{T}^{Rc}-p_{T}^{Gen})/p_{T}^{Gen};", 500, 0, 50, 300, -0.15, 0.15);
     hEtaResvsGenEta      = new TH2D("hEtaResvsGenEta", "hEtaResvsGenEta; #eta^{Gen}; #eta^{Rc}-#eta^{Gen};", 300, -3, 3, 200, -0.01, 0.01);
     hPhiResvsGenPhi      = new TH2D("hPhiResvsGenPhi", "hPhiResvsGenPhi; #phi^{Gen}; #phi^{Rc}-#phi^{Gen};", 180, -PI, PI, 200, -0.01, 0.01);
 
     hNRcMuvsNGenMu          = new TH2D("hNRcMuvsNGenMu", "hNRcMuvsNGenMu; # of muon (GEN); # of muon (Soft)", 10, 0, 10, 10, 0, 10);
-    hPhivsEtavsPt           = new TH3D("hPhivsEtavsPt", "hPhivsEtavsPt; p_{T} (GeV/c); #eta; #phi", 500, 0, 5, 300, -3, 3, 180, -PI, PI);
+    hPhivsEtavsPt           = new TH3D("hPhivsEtavsPt", "hPhivsEtavsPt; p_{T} (GeV/c); #eta; #phi", 500, 0, 50, 300, -3, 3, 180, -PI, PI);
 
     hRcPairPtvsGenPairPt   = new TH2D("hRcPairPtvsGenPairPt", "hRcPairPtvsGenPairPt; pair p_{T}^{Gen} (GeV/c); pair p_{T}^{Rc} (GeV/c);", mHistPtBins, mHistPtLow, mHistPtHi, mHistPtBins, mHistPtLow, mHistPtHi);
     hRcPairEtavsGenPairEta = new TH2D("hRcPairEtavsGenPairEta", "hRcPairEtavsGenPairEta; pair #eta^{Gen}; pair #eta^{Rc};", 160, -4, 4, 160, -4, 4);
     hRcPairPhivsGenPairPhi = new TH2D("hRcPairPhivsGenPairPhi", "hRcPairPhivsGenPairPhi; pair #phi^{Gen}; pair #phi^{Rc};", 120, -PI, PI, 120, -PI, PI);
     hMassResvsGenMass      = new TH2D("hMassResvsGenMass", "hMassResvsGenMass; M_{#mu#mu}^{Gen} (GeV/c^{2}); (M_{#mu#mu}^{Rc} - M_{#mu#mu}^{Gen})/M_{#mu#mu}^{Gen};", mHistMassBins, mHistMassLow, mHistMassHi, 300, -0.15, 0.15);
-    hPairPtResvsGenPairPt  = new TH2D("hPairPtResvsGenPairPt", "hPairPtResvsGenPairPt; J/#psi p_{T}^{Gen} (GeV/c); J/#psi p_{T}^{Rc} - p_{T}^{Gen};", 300, 0, 0.3, 300, -0.3, 0.3);
     hRapResvsGenRap        = new TH2D("hRapResvsGenRap", "hRapResvsGenRap; pair y^{Gen}; y^{Rc} - y^{Gen};", 600, -3, 3, 1000, -0.1, 0.1);
 
-    hMvsPtvsRap_Gen     = new TH3D("hMvsPtvsRap_Gen", "hMvsPtvsRap_Gen; Rapidity; p_{T} (GeV/c); M_{#mu#mu} (GeV/c^{2})", mHistRapBins, mHistRapLow, mHistRapHi, mHistPtBins, mHistPtLow, mHistPtHi, mHistMassBins, mHistMassLow, mHistMassHi);
-    hMvsAsyPhivsRap_Gen = new TH3D("hMvsAsyPhivsRap_Gen", "hMvsAsyPhivsRap_Gen; Rapidity; #alpha; M_{#mu#mu} (GeV/c^{2})", mHistRapBins, mHistRapLow, mHistRapHi, mHistAsyPhiBins, mHistAsyPhiLow, mHistAsyPhiHi, mHistMassBins, mHistMassLow, mHistMassHi);
+    hRawMvsPtvsRap_Gen = new TH3D("hRawMvsPtvsRap_Gen", "hRawMvsPtvsRap_Gen; Rapidity; p_{T} (GeV/c); M_{#mu#mu} (GeV/c^{2})", mHistRapBins, mHistRapLow, mHistRapHi, mHistPtBins, mHistPtLow, mHistPtHi, mHistMassBins, mHistMassLow, mHistMassHi);
+    hMvsPtvsRap_Gen    = new TH3D("hMvsPtvsRap_Gen", "hMvsPtvsRap_Gen; Rapidity; p_{T} (GeV/c); M_{#mu#mu} (GeV/c^{2})", mHistRapBins, mHistRapLow, mHistRapHi, mHistPtBins, mHistPtLow, mHistPtHi, mHistMassBins, mHistMassLow, mHistMassHi);
+    hPt2vsM_Gen        = new TH2D("hPt2vsM_Gen", "hPt2vsM_Gen; M_{#mu#mu} (GeV/c^{2}); p_{T}^{2} ((GeV/c)^{2})", mHistMassBins, mHistMassLow, mHistMassHi, mHistPt2Bins, mHistPt2Low, mHistPt2Hi);
+    hAsyPhivsM_Gen     = new TH2D("hAsyPhivsM_Gen", "hAsyPhivsM_Gen; M_{#mu#mu} (GeV/c^{2}); #alpha", mHistMassBins, mHistMassLow, mHistMassHi, mHistAsyPhiBins, mHistAsyPhiLow, mHistAsyPhiHi);
+    hAsyPtvsM_Gen      = new TH2D("hAsyPtvsM_Gen", "hAsyPtvsM_Gen; M_{#mu#mu} (GeV/c^{2}); p_{T} Asymmetry", mHistMassBins, mHistMassLow, mHistMassHi, mHistAsyPtBins, mHistAsyPtLow, mHistAsyPtHi);
     hDeltaPhivsM_Gen   = new TH2D("hDeltaPhivsM_Gen", "hDeltaPhivsM_Gen; M_{#mu#mu} (GeV/c^{2}); #phi_{#mu^{+}+#mu^{-}} - #phi_{#mu^{+}-#mu^{-}}", mHistMassBins, mHistMassLow, mHistMassHi, 120, -PI, PI);
 
-    hMvsPtvsRap_woEvtSel_woSmear = new TH3D("hMvsPtvsRap_woEvtSel_woSmear", "hMvsPtvsRap_woEvtSel_woSmear; Rapidity; p_{T} (GeV/c); M_{#mu#mu} (GeV/c^{2})", mHistRapBins, mHistRapLow, mHistRapHi, mHistPtBins, mHistPtLow, mHistPtHi, mHistMassBins, mHistMassLow, mHistMassHi);
-    hMvsPtvsRap_woSmear = new TH3D("hMvsPtvsRap_woSmear", "hMvsPtvsRap_woSmear; Rapidity; p_{T} (GeV/c); M_{#mu#mu} (GeV/c^{2})", mHistRapBins, mHistRapLow, mHistRapHi, mHistPtBins, mHistPtLow, mHistPtHi, mHistMassBins, mHistMassLow, mHistMassHi);
+    hAsyPhivsPt_Gen     = new TH2D("hAsyPhivsPt_Gen", "hAsyPhivsPt_Gen; p_{T} (GeV/c); #alpha", 1000, 0, 100, mHistAsyPhiBins, mHistAsyPhiLow, mHistAsyPhiHi);
+    for(Int_t ip=0; ip<nNeus; ip++){
+        for(Int_t im=ip; im<nNeus; im++){
+            hModifiedPairPt_Neu[ip][im] = new TH1D(Form("hModifiedPairPt_Neu%dn%dn", ip, im), "hModifiedPairPt; p_{T} (GeV/c)", 10000, mHistPtLow, mHistPtHi);
+        }
+    }
 
-    hMvsPtvsRap_woEvtSel = new TH3D("hMvsPtvsRap_woEvtSel", "hMvsPtvsRap_woEvtSel; Rapidity; p_{T} (GeV/c); M_{#mu#mu} (GeV/c^{2})", mHistRapBins, mHistRapLow, mHistRapHi, mHistPtBins, mHistPtLow, mHistPtHi, mHistMassBins, mHistMassLow, mHistMassHi);
     hMvsPtvsRap = new TH3D("hMvsPtvsRap", "hMvsPtvsRap; Rapidity; p_{T} (GeV/c); M_{#mu#mu} (GeV/c^{2})", mHistRapBins, mHistRapLow, mHistRapHi, mHistPtBins, mHistPtLow, mHistPtHi, mHistMassBins, mHistMassLow, mHistMassHi);
     hMvsAsyPhivsRap = new TH3D("hMvsAsyPhivsRap", "hMvsAsyPhivsRap; Rapidity; #alpha; M_{#mu#mu} (GeV/c^{2})", mHistRapBins, mHistRapLow, mHistRapHi, mHistAsyPhiBins, mHistAsyPhiLow, mHistAsyPhiHi, mHistMassBins, mHistMassLow, mHistMassHi);
+    hPt2vsM = new TH2D("hPt2vsM", "hPt2vsM; M_{#mu#mu} (GeV/c^{2}); p_{T}^{2} ((GeV/c)^{2})", mHistMassBins, mHistMassLow, mHistMassHi, mHistPt2Bins, mHistPt2Low, mHistPt2Hi);
+    hAsyPhivsM = new TH2D("hAsyPhivsM", "hAsyPhivsM; M_{#mu#mu} (GeV/c^{2}); #alpha", mHistMassBins, mHistMassLow, mHistMassHi, mHistAsyPhiBins, mHistAsyPhiLow, mHistAsyPhiHi);
+    hAsyPhivsM_EffCorr = new TH2D("hAsyPhivsM_EffCorr", "hAsyPhivsM_EffCorr; M_{#mu#mu} (GeV/c^{2}); #alpha", mHistMassBins, mHistMassLow, mHistMassHi, mHistAsyPhiBins, mHistAsyPhiLow, mHistAsyPhiHi);
+    hAsyPtvsM = new TH2D("hAsyPtvsM", "hAsyPtvsM; M_{#mu#mu} (GeV/c^{2}); p_{T} Asymmetry", mHistMassBins, mHistMassLow, mHistMassHi, mHistAsyPtBins, mHistAsyPtLow, mHistAsyPtHi);
     hDeltaPhivsM = new TH2D("hDeltaPhivsM", "hDeltaPhivsM; M_{#mu#mu} (GeV/c^{2}); #phi_{#mu^{+}+#mu^{-}} - #phi_{#mu^{+}-#mu^{-}}", mHistMassBins, mHistMassLow, mHistMassHi, 120, -PI, PI);
 
-    const Int_t nPtBins = 25;
-    Double_t    Pt[nPtBins+1] = {0, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 3.0, 3.2, 3.6, 4.0};
 
-    const Int_t nEtaBins = 100;
+    const Int_t nPtTailBins = 10;
+    Double_t    PtTail[nPtTailBins+1] = {3.2, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 7.0, 8.0, 10.0, 20.0};
+    Double_t    mPtStep = 0.2;
+
+    Int_t       mBinIdx = PtTail[0]/mPtStep;
+    const Int_t nPtBins = mBinIdx + nPtTailBins;
+    Double_t Pt[1000];
+    for(Int_t ibin=0; ibin<mBinIdx; ibin++){
+        Pt[ibin] = mPtStep*ibin;
+    }
+    for(Int_t ibin=0; ibin<=nPtTailBins; ibin++){
+        Pt[mBinIdx+ibin] = PtTail[ibin];
+    }
+
+    const Int_t nEtaBins = 20;
     Double_t Eta[nEtaBins+1];
-    Double_t mEtaLow = -2.5, mEtaHi = 2.5;
+    Double_t mEtaLow = -3, mEtaHi = 3;
     Double_t mEtaStep = (mEtaHi - mEtaLow)/nEtaBins;
     for(Int_t ieta=0; ieta<=nEtaBins; ieta++){
         Eta[ieta] = mEtaLow + ieta*mEtaStep;
@@ -491,6 +545,13 @@ void bookHistos()
     hTrigPosMuPhivsEtavsPtInpair = new TH3D("hTrigPosMuPhivsEtavsPtInpair", "hTrigPosMuPhivsEtavsPtInpair; p_{T} (GeV/c); #eta; #phi", nPtBins, Pt, nEtaBins, Eta, nPhiBins, Phi);
     hMthNegMuPhivsEtavsPtInpair  = new TH3D("hMthNegMuPhivsEtavsPtInpair", "hMthNegMuPhivsEtavsPtInpair; p_{T} (GeV/c); #eta; #phi", nPtBins, Pt, nEtaBins, Eta, nPhiBins, Phi);
     hTrigNegMuPhivsEtavsPtInpair = new TH3D("hTrigNegMuPhivsEtavsPtInpair", "hTrigNegMuPhivsEtavsPtInpair; p_{T} (GeV/c); #eta; #phi", nPtBins, Pt, nEtaBins, Eta, nPhiBins, Phi);
+
+    hPosMuPhivsEtavsPt = new TH3D("hPosMuPhivsEtavsPt", "hPosMuPhivsEtavsPt; p_{T} (GeV/c); #eta; #phi", 100, 0, 50, 24, -2.4, 2.4, 60, -PI, PI);
+    hNegMuPhivsEtavsPt = new TH3D("hNegMuPhivsEtavsPt", "hNegMuPhivsEtavsPt; p_{T} (GeV/c); #eta; #phi", 100, 0, 50, 24, -2.4, 2.4, 60, -PI, PI);
+
+    hTnpDenEtavsPt = new TH2D("hTnpDenEtavsPt", "hTnpDenEtavsPt; p_{T} (GeV/c); #eta", 300, 0, 30, 24, 0, 2.4);
+    hTnpPassEtavsPt = new TH2D("hTnpPassEtavsPt", "hTnpPassEtavsPt; p_{T} (GeV/c); #eta", 300, 0, 30, 24, 0, 2.4);
+    hTnpFailEtavsPt = new TH2D("hTnpFailEtavsPt", "hTnpFailEtavsPt; p_{T} (GeV/c); #eta", 300, 0, 30, 24, 0, 2.4);
 }
 
 void writeHistos(TString fileName)
@@ -506,12 +567,9 @@ void writeHistos(TString fileName)
     hNtrkofflinevsNtrkHP->Write();
 
     hPhivsEtavsPt_Gen->Write();
-    hForward_PhivsEtavsPt_Gen->Write();
     hNegPtvsPosPt_Gen->Write();
     hNegEtavsPosEta_Gen->Write();
     hNegPhivsPosPhi_Gen->Write();
-    hDeltaR->Write();
-    hDeltaPt->Write();
     hPtResvsGenPt->Write();
     hEtaResvsGenEta->Write();
     hPhiResvsGenPhi->Write();
@@ -523,19 +581,28 @@ void writeHistos(TString fileName)
     hRcPairEtavsGenPairEta->Write();
     hRcPairPhivsGenPairPhi->Write();
     hMassResvsGenMass->Write();
-    hPairPtResvsGenPairPt->Write();
     hRapResvsGenRap->Write();
 
+    hRawMvsPtvsRap_Gen->Write();
     hMvsPtvsRap_Gen->Write();
-    hMvsAsyPhivsRap_Gen->Write();
+    hPt2vsM_Gen->Write();
+    hAsyPhivsM_Gen->Write();
+    hAsyPtvsM_Gen->Write();
     hDeltaPhivsM_Gen->Write();
 
-    hMvsPtvsRap_woEvtSel_woSmear->Write();
-    hMvsPtvsRap_woSmear->Write();
+    hAsyPhivsPt_Gen->Write();
+    for(Int_t ip=0; ip<nNeus; ip++){
+        for(Int_t im=ip; im<nNeus; im++){
+            hModifiedPairPt_Neu[ip][im]->Write();
+        }
+    }
 
-    hMvsPtvsRap_woEvtSel->Write();
     hMvsPtvsRap->Write();
     hMvsAsyPhivsRap->Write();
+    hPt2vsM->Write();
+    hAsyPhivsM->Write();
+    hAsyPhivsM_EffCorr->Write();
+    hAsyPtvsM->Write();
     hDeltaPhivsM->Write();
 
     hPosMuPhivsEtavsPt_Gen->Write();
@@ -553,41 +620,37 @@ void writeHistos(TString fileName)
     hMthNegMuPhivsEtavsPtInpair->Write();
     hTrigNegMuPhivsEtavsPtInpair->Write();
 
+    hPosMuPhivsEtavsPt->Write();
+    hNegMuPhivsEtavsPt->Write();
+
+    hTnpDenEtavsPt->Write();
+    hTnpPassEtavsPt->Write();
+    hTnpFailEtavsPt->Write();
+
     fOut->Close();
 }
 
-Bool_t goodMuPair(VertexCompositeTree& evtTree, const int icand)
+Bool_t goodMcTrack(VertexCompositeTree& evtTree, const int icand)
 {
-    Double_t mTrkPtTh1  = fTrkAcc->Eval(evtTree.EtaD1()[icand]);
-    Double_t mTrkPtTh2  = fTrkAcc->Eval(evtTree.EtaD2()[icand]);
-    Double_t mTrigPtTh1 = fTrigAcc->Eval(evtTree.EtaD1()[icand]);
-    Double_t mTrigPtTh2 = fTrigAcc->Eval(evtTree.EtaD2()[icand]);
-
-    if(evtTree.pTD1()[icand] < mTrkPtTh1 || evtTree.pTD2()[icand] < mTrkPtTh2) return kFALSE;
-
-    Bool_t isTrigAcc1 = kFALSE, isTrigAcc2 = kFALSE;
-    if(evtTree.trigMuon1()[trigIdx][icand] && evtTree.pTD1()[icand] >= mTrigPtTh1) isTrigAcc1 = kTRUE;
-    if(evtTree.trigMuon2()[trigIdx][icand] && evtTree.pTD2()[icand] >= mTrigPtTh2) isTrigAcc2 = kTRUE;
-
-    if(!isTrigAcc1 && !isTrigAcc2) return kFALSE;
+    if(evtTree.pTD1_gen()[icand] < mPtCut || evtTree.pTD2_gen()[icand] < mPtCut) return kFALSE;
+    if(TMath::Abs(evtTree.EtaD1_gen()[icand]) > mEtaCut || TMath::Abs(evtTree.EtaD2_gen()[icand]) > mEtaCut) return kFALSE;
 
     return kTRUE;
 }
 
-Bool_t goodMuPair(const TLorentzVector posFourMom, const Bool_t isPosTrig, const TLorentzVector negFourMom, const Bool_t isNegTrig)
+Bool_t goodRcTrack(VertexCompositeTree& evtTree, const int icand)
 {
-    Double_t mPosTrkPtTh  = fTrkAcc->Eval(posFourMom.Eta());
-    Double_t mNegTrkPtTh  = fTrkAcc->Eval(negFourMom.Eta());
-    Double_t mPosTrigPtTh = fTrigAcc->Eval(posFourMom.Eta());
-    Double_t mNegTrigPtTh = fTrigAcc->Eval(negFourMom.Eta());
+    if(evtTree.pTD1()[icand] < mPtCut || evtTree.pTD2()[icand] < mPtCut) return kFALSE;
+    if(TMath::Abs(evtTree.EtaD1()[icand]) > mEtaCut || TMath::Abs(evtTree.EtaD2()[icand]) > mEtaCut) return kFALSE;
 
-    if(posFourMom.Pt() < mPosTrkPtTh || negFourMom.Pt() < mNegTrkPtTh) return kFALSE;
+    return kTRUE;
+}
 
-    Bool_t isPosTrigAcc = kFALSE, isNegTrigAcc = kFALSE;
-    if(isPosTrig && posFourMom.Pt() >= mPosTrigPtTh) isPosTrigAcc = kTRUE;
-    if(isNegTrig && negFourMom.Pt() >= mNegTrigPtTh) isNegTrigAcc = kTRUE;
-
-    if(!isPosTrigAcc && !isNegTrigAcc) return kFALSE;
+Bool_t matchedTrack(Double_t genPt, Double_t genEta, Double_t genPhi, Double_t rcPt, Double_t rcEta, Double_t rcPhi)
+{
+    if(TMath::Abs((rcPt-genPt)/genPt) > 0.15) return kFALSE;
+    if(TMath::Abs(rcEta - genEta) > 0.01)     return kFALSE;
+    if(TMath::Abs(rcPhi - genPhi) > 0.01)     return kFALSE;
 
     return kTRUE;
 }
@@ -603,4 +666,16 @@ Double_t shiftDeltaPhi(Double_t dPhi)
         dPhi -= 2 * PI;
 
     return dPhi;
+}
+
+Double_t shiftToPi(Double_t dPhi)
+{
+    if (isnan(dPhi))
+        return -999;
+
+    Double_t deltaPhi = shiftDeltaPhi(dPhi);
+    if (deltaPhi < 0)
+        deltaPhi += PI;
+
+    return deltaPhi;
 }
