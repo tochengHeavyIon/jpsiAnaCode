@@ -11,7 +11,7 @@ const Double_t PI = TMath::Pi();
 // 4 HLT_HIUPC_DoubleMu0_NotMBHF2AND (HIForward) -> Events with at least two L1 muons with medium trigger quality  (requires at least three muon stations with measurements) with low energy in the HF calorimeters (NotMBHF2AND means !(HF+ > 15 ADC Counts  AND  HF- > 19 ADC Counts))
 // 5 HLT_HIL1MuOpen_Centrality_80_100 (HIForward) -> Events with at least one L1 muon with loose trigger quality  (requires at least two muon stations with measurements) within a centrality percentile range between 80-100%
 // 7 HLT_HIUPC_SingleMuOpen_NotMBHF2AND -> Events with at least one L1 muon with loose trigger quality  (requires at least two muon stations with measurements) within low energy in the HF calorimeters (NotMBHF2AND means !(HF+ > 15 ADC Counts  AND  HF- > 19 ADC Counts))
-const Int_t nTrigs = 8;
+const Int_t nTrigs = 9;
 
 //const Int_t   trigIdx = 4;
 //const TString trigName = "DoubleMuUPC";
@@ -19,8 +19,13 @@ const Int_t nTrigs = 8;
 const Int_t   trigIdx = 7;
 const TString trigName = "SingleMuUPC";
 
-const UInt_t mRunNbCut = 326776; // get this number from Quan (L = 1570.6796 ub^{-1} for runID >= 326776)
-const Double_t mCMSLum = 1570.6796; // ub^{-1} for HLT_HIUPC_SingleMuOpen_NotMBHF2AND_v with runID >= 326776
+const Int_t zbTrigIdx = 9;
+const Int_t emptyBXTrigIdx = 10;
+
+const UInt_t   mRunNbCut = 326776; // get this number from Quan (L = 1520.302020023633 ub^{-1} for runID >= 326776)
+const Double_t mCMSLum = 1520.302020023633; // ub^{-1} for HLT_HIUPC_SingleMuOpen_NotMBHF2AND_v with runID >= 326776 recorded
+
+
 const Int_t  mCentralityCut = 180;
 const Int_t  mNtrkofflineCut = 2;
 
@@ -30,63 +35,41 @@ const Double_t mHFsumETCut[nDirs] = {12, 12};
 const Double_t mZdcFitLow[nDirs]  = {4.2e3, 6.e3};
 const Double_t mZdcFitHi[nDirs]   = {25.e3, 37.5e3};
 
-//const Int_t nNeus = 3;
-const Int_t nNeus = 2;
-const Int_t nNeuMults = nNeus*(nNeus+1)/2;
-
-//const Double_t mNeuZDCLow[nDirs][nNeus] = {
-//    {0, 4.2e3, 10.e3},
-//    {0, 6.0e3, 16.e3}
-//};
-//const Double_t mNeuZDCHi[nDirs][nNeus] = {
-//    {4.2e3, 10.e3, 1.e6},
-//    {6.0e3, 16.e3, 1.e6}
-//};
+const Int_t nNeus = 3;
+const Int_t nPts = nNeus*(nNeus+1)/2;
 
 const Double_t mNeuZDCLow[nDirs][nNeus] = {
-    {0, 4.2e3},
-    {0, 6.0e3}
+    {0, 4.2e3, 10.e3},
+    {0, 6.0e3, 16.e3}
 };
 const Double_t mNeuZDCHi[nDirs][nNeus] = {
-    {4.2e3, 1.e6},
-    {6.0e3, 1.e6}
+    {4.2e3, 10.e3, 5.e5},
+    {6.0e3, 16.e3, 6.e5}
+};
+
+// expected neutron peak poisition
+// Plus(*e3):   7.33, 14.66, 21.99, 29.32, 36.65, 43.98, 51.31, 58.64,  65.97,  73.3
+// Minus(*e3): 11.42, 22.84, 34.26, 45.68, 57.10, 68.52, 79.94, 91.36, 102.78, 114.2
+const Int_t  nRegions = 8;
+const Double_t mNeuZDC[nDirs][nRegions+1] = {
+    {0, 4.2e3, 10.7e3, 17.0e3, 24.9e3, 32.3e3, 46.9e3, 61.6e3,  80.e3}, 
+    {0, 6.e3,  17.3e3, 27.0e3, 38.8e3, 50.2e3, 73.1e3, 95.9e3, 120.e3}
 };
 
 const Double_t mTwoNeuZDCLow[nDirs] = {11e3, 17.5e3};
 const Double_t mTwoNeuZDCHi[nDirs]  = {17e3, 27.0e3};
+const Double_t mThreeNeuZDCLow[nDirs] = {21e3, 32e3};
+const Double_t mThreeNeuZDCHi[nDirs]  = {27e3, 40e3};
 
-//const Int_t    nRapBins = 16;
-//const Double_t mRapLow[nRapBins] = {-2.4, -2.3, -2.2, -2.1, -2.0, -1.9, -1.8, -1.7, 1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3};
-//const Double_t mRapHi[nRapBins]  = {-2.3, -2.2, -2.1, -2.0, -1.9, -1.8, -1.7, -1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4};
+const Int_t    nMBins = 3;
+const Double_t massLow[nMBins] = { 8, 20, 30};
+const Double_t massHi[nMBins] = { 20, 30, 60};
 
-const Int_t    nRapBins = 12;
-const Double_t mRapLow[nRapBins] = {-2.4, -2.2, -2.1, -2.0, -1.9, -1.8, 1.6, 1.8, 1.9, 2.0, 2.1, 2.2};
-const Double_t mRapHi[nRapBins]  = {-2.2, -2.1, -2.0, -1.9, -1.8, -1.6, 1.8, 1.9, 2.0, 2.1, 2.2, 2.4};
+//track quality cuts
+const Double_t mPtCut = 3.5;
+const Double_t mEtaCut = 2.4;
 
-//const Int_t    nDiffRapBins = 6;
-//const Double_t mDiffRapLow[nRapBins] = {-2.4, -2.1, -1.8, 1.6, 1.8, 2.1};
-//const Double_t mDiffRapHi[nRapBins]  = {-2.1, -1.8, -1.6, 1.8, 2.1, 2.4};
-
-const Int_t    nDiffRapBins = 4;
-const Double_t mDiffRapLow[nRapBins] = {-2.4, -2.0, 1.6, 2.0};
-const Double_t mDiffRapHi[nRapBins]  = {-2.0, -1.6, 2.0, 2.4};
-
-const Double_t mMassLow4MuonAccStudy = 2;
-const Double_t mMassHi4MuonAccStudy  = 5;
-
-const Double_t mLowMassBandLow = 2.75;
-const Double_t mLowMassBandHi  = 2.9;
-//const Double_t mJpsiMassLow = 2.85;
-//const Double_t mJpsiMassHi  = 3.35;
-const Double_t mJpsiMassLow = 2.95;
-const Double_t mJpsiMassHi  = 3.25;
-const Double_t mHiMassBandLow = 3.3;
-const Double_t mHiMassBandHi  = 3.45;
-
+const Double_t mVtxProbCut = 1.e-6;
 const Double_t mPairYCut = 2.4;
-const Double_t mAlphaCut = 6.e-3;
 
-const Int_t    nSmearScan = 200;
-const Double_t mInitPar0  = 0.01;
-const Double_t mSmearStep  = 5.e-5;
-const Double_t mPar0 = 0.0145;
+const Double_t mAlphaCut = 6.e-3;
