@@ -1,5 +1,12 @@
 {
     "files.associations": {
+<<<<<<< Updated upstream
         "plotDiMuon.C": "cpp"
+=======
+        "anaEvt.C": "cpp",
+        "plotZDC.C": "cpp",
+        "plotDiMuon.C": "cpp",
+        "function.C": "cpp"
+>>>>>>> Stashed changes
     }
 }

@@ -1,7 +1,7 @@
-#include "/Users/syang/Tools/Macro/headers.h"
-#include "/Users/syang/work/run2/upcDimuon/Utilities/Ntuple/VertexCompositeTree.h"
-#include "/Users/syang/work/run2/upcDimuon/common/funUtil.h"
-#include "/Users/syang/work/run2/upcDimuon/common/tnp_weight_lowptPbPb.h"
+#include "/Users/bulubulubulu/Documents/GitHub/jpsiAnaCode/common/headers.h"
+#include "/Users/bulubulubulu/Documents/GitHub/jpsiAnaCode/common/VertexCompositeTree.h"
+#include "/Users/bulubulubulu/Documents/GitHub/jpsiAnaCode/common/funUtil.h"
+#include "/Users/bulubulubulu/Documents/GitHub/jpsiAnaCode/common/tnp_weight_lowptPbPb.h"
 
 TH1D *hnEvts;
 TH2D *hCenvsTrig;
@@ -81,6 +81,16 @@ Double_t shiftToPi(Double_t dPhi);
 void bookHistos();
 void writeHistos(TString fileName = "test");
 
+double_t etaToY(double_t eta, double_t mass, double_t pt);
+
+double_t yyToy_mumu(double_t y1, double_t y2);
+
+double_t PhotonEnergy(double_t y_mu_mu);
+
+double_t m_mumu(double_t posPt, double_t posEta, double_t posPhi, double_t posy,double_t negPt, double_t negEta, double_t negPhi, double_t negy);
+
+
+
 // *** load UPC TnP ***
 const Int_t nEtaBins = 4;
 Double_t    etaBoundary[nEtaBins+1] = {0, 1.2, 1.8, 2.1, 2.4};
@@ -108,7 +118,7 @@ void anaEvt(Bool_t effCorr = kTRUE, Bool_t applyTnPSF = kFALSE, Bool_t incHadron
         return;
     }
 
-    const auto& inputFile = "/Users/syang/work/run2/upcDimuon/rootfiles/VertexCompositeTree_HIForward_HIRun2018_04Apr2019_DiMuMassMin0_20191206.root";
+    const auto& inputFile = "/Users/bulubulubulu/Desktop/bishe/dimuana_part1.root";
 
     const auto& csTreeDir = "dimucontana";           // For MC use dimucontana_mc
     const auto& wsTreeDir = "dimucontana_wrongsign"; // For MC use dimucontana_wrongsign_mc
@@ -314,6 +324,21 @@ void anaEvt(Bool_t effCorr = kTRUE, Bool_t applyTnPSF = kFALSE, Bool_t incHadron
             Double_t negPhi    = csTree.chargeD1()[icand] < 0 ? csTree.PhiD1()[icand] : csTree.PhiD2()[icand]; 
             Bool_t   isNegTrig = csTree.chargeD1()[icand] < 0 ? csTree.trigMuon1()[trigIdx][icand] : csTree.trigMuon2()[trigIdx][icand];
 
+            double_t posy      = etaToY(posEta, mass, posPt);
+            double_t negy      = etaToY(negEta, mass, negPt);
+            
+            double_t costheta  = 0;
+            if (posy > 0)  double costheta = tanh(0.5*(posy-negy));
+            else double costheta = tanh(0.5*(negy-posy));
+
+            double_t y_mumu = yyToy_mumu(posy, negy);
+
+            //from the final state muon pair, calculate the photon energy
+            double_t k_max = PhotonEnergy(y_mumu);
+            double_t k_min = PhotonEnergy(-y_mumu);
+
+            double_t SysM_mumu = m_mumu(posPt, posEta, posPhi, posy, negPt, negEta, negPhi, negy);
+            
             if(
                     mass>massLow[0] && mass<massHi[nMBins-1]
                     && asyPhi<mAlphaCut
@@ -358,42 +383,42 @@ void anaEvt(Bool_t effCorr = kTRUE, Bool_t applyTnPSF = kFALSE, Bool_t incHadron
                 Double_t trkEff = 1;
                 Double_t trigEff = 1;
 
-                if(applyTnPSF){
-                    trkEff  = hPosMu3DMthEff->GetBinContent(posPtBin, posEtaBin, posPhiBin) * hNegMu3DMthEff->GetBinContent(negPtBin, negEtaBin, negPhiBin);
-                    trkEff *= tnp_weight_trk_pbpb(posEta) * tnp_weight_trk_pbpb(negEta); 
-                    //trkEff *= tnp_weight_muid_pbpb(posPt, posEta) * tnp_weight_muid_pbpb(negPt, negEta); 
+                // if(applyTnPSF){
+                //     trkEff  = hPosMu3DMthEff->GetBinContent(posPtBin, posEtaBin, posPhiBin) * hNegMu3DMthEff->GetBinContent(negPtBin, negEtaBin, negPhiBin);
+                //     trkEff *= tnp_weight_trk_pbpb(posEta) * tnp_weight_trk_pbpb(negEta); 
+                //     //trkEff *= tnp_weight_muid_pbpb(posPt, posEta) * tnp_weight_muid_pbpb(negPt, negEta); 
 
-                    ////trigEff  = 1 - (1 - hPosMu3DTrigEff->GetBinContent(posPtBin, posEtaBin, posPhiBin)) * (1 - hNegMu3DTrigEff->GetBinContent(negPtBin, negEtaBin, negPhiBin));
-                    ////trigEff *= tnp_weight_trg_pbpb(posPt, posEta, 2, 0) * tnp_weight_trg_pbpb(negPt, negEta, 2, 0);
+                //     ////trigEff  = 1 - (1 - hPosMu3DTrigEff->GetBinContent(posPtBin, posEtaBin, posPhiBin)) * (1 - hNegMu3DTrigEff->GetBinContent(negPtBin, negEtaBin, negPhiBin));
+                //     ////trigEff *= tnp_weight_trg_pbpb(posPt, posEta, 2, 0) * tnp_weight_trg_pbpb(negPt, negEta, 2, 0);
 
-                    //trigEff = 1 - (1 - hPosMu3DTrigEff->GetBinContent(posPtBin, posEtaBin, posPhiBin)*tnp_weight_trg_pbpb(posPt, posEta, 2, 0)) * (1 - hNegMu3DTrigEff->GetBinContent(negPtBin, negEtaBin, negPhiBin)*tnp_weight_trg_pbpb(negPt, negEta, 2, 0));
+                //     //trigEff = 1 - (1 - hPosMu3DTrigEff->GetBinContent(posPtBin, posEtaBin, posPhiBin)*tnp_weight_trg_pbpb(posPt, posEta, 2, 0)) * (1 - hNegMu3DTrigEff->GetBinContent(negPtBin, negEtaBin, negPhiBin)*tnp_weight_trg_pbpb(negPt, negEta, 2, 0));
 
-                    Int_t posEtaIdx = grabEtaIdx(posEta);
-                    Int_t negEtaIdx = grabEtaIdx(negEta);
+                //     Int_t posEtaIdx = grabEtaIdx(posEta);
+                //     Int_t negEtaIdx = grabEtaIdx(negEta);
 
-                    if(posEtaIdx<0 || negEtaIdx<0){
-                        cout<<"Invalid eta idx found in TnP SF applying"<<endl;
-                        return;
-                    }
+                //     if(posEtaIdx<0 || negEtaIdx<0){
+                //         cout<<"Invalid eta idx found in TnP SF applying"<<endl;
+                //         return;
+                //     }
 
-                    Int_t posPtIdx = hSFStat_TrigTnp[posEtaIdx]->GetXaxis()->FindBin(posPt);
-                    posPtIdx = posPtIdx > hSFStat_TrigTnp[posEtaIdx]->GetNbinsX() ? hSFStat_TrigTnp[posEtaIdx]->GetNbinsX() : posPtIdx;
+                //     Int_t posPtIdx = hSFStat_TrigTnp[posEtaIdx]->GetXaxis()->FindBin(posPt);
+                //     posPtIdx = posPtIdx > hSFStat_TrigTnp[posEtaIdx]->GetNbinsX() ? hSFStat_TrigTnp[posEtaIdx]->GetNbinsX() : posPtIdx;
 
-                    Int_t negPtIdx = hSFStat_TrigTnp[negEtaIdx]->GetXaxis()->FindBin(negPt);
-                    negPtIdx = negPtIdx > hSFStat_TrigTnp[negEtaIdx]->GetNbinsX() ? hSFStat_TrigTnp[negEtaIdx]->GetNbinsX() : negPtIdx;
+                //     Int_t negPtIdx = hSFStat_TrigTnp[negEtaIdx]->GetXaxis()->FindBin(negPt);
+                //     negPtIdx = negPtIdx > hSFStat_TrigTnp[negEtaIdx]->GetNbinsX() ? hSFStat_TrigTnp[negEtaIdx]->GetNbinsX() : negPtIdx;
 
-                    Double_t posMuIdTnP_SF = hSFStat_MuIdTnp[posEtaIdx]->GetBinContent(posPtIdx);
-                    Double_t negMuIdTnP_SF = hSFStat_MuIdTnp[negEtaIdx]->GetBinContent(negPtIdx);
-                    Double_t posTrigTnP_SF = hSFStat_TrigTnp[posEtaIdx]->GetBinContent(posPtIdx);
-                    Double_t negTrigTnP_SF = hSFStat_TrigTnp[negEtaIdx]->GetBinContent(negPtIdx);
+                //     Double_t posMuIdTnP_SF = hSFStat_MuIdTnp[posEtaIdx]->GetBinContent(posPtIdx);
+                //     Double_t negMuIdTnP_SF = hSFStat_MuIdTnp[negEtaIdx]->GetBinContent(negPtIdx);
+                //     Double_t posTrigTnP_SF = hSFStat_TrigTnp[posEtaIdx]->GetBinContent(posPtIdx);
+                //     Double_t negTrigTnP_SF = hSFStat_TrigTnp[negEtaIdx]->GetBinContent(negPtIdx);
 
-                    trkEff *= posMuIdTnP_SF * negMuIdTnP_SF;
-                    trigEff = 1 - (1 - hPosMu3DTrigEff->GetBinContent(posPtBin, posEtaBin, posPhiBin)*posTrigTnP_SF) * (1 - hNegMu3DTrigEff->GetBinContent(negPtBin, negEtaBin, negPhiBin)*negTrigTnP_SF);
-                }
-                else{
-                    trkEff  = hPosMu3DMthEff->GetBinContent(posPtBin, posEtaBin, posPhiBin) * hNegMu3DMthEff->GetBinContent(negPtBin, negEtaBin, negPhiBin);
-                    trigEff = 1 - (1 - hPosMu3DTrigEff->GetBinContent(posPtBin, posEtaBin, posPhiBin)) * (1 - hNegMu3DTrigEff->GetBinContent(negPtBin, negEtaBin, negPhiBin));
-                }
+                //     trkEff *= posMuIdTnP_SF * negMuIdTnP_SF;
+                //     trigEff = 1 - (1 - hPosMu3DTrigEff->GetBinContent(posPtBin, posEtaBin, posPhiBin)*posTrigTnP_SF) * (1 - hNegMu3DTrigEff->GetBinContent(negPtBin, negEtaBin, negPhiBin)*negTrigTnP_SF);
+                // }
+                
+                trkEff  = hPosMu3DMthEff->GetBinContent(posPtBin, posEtaBin, posPhiBin) * hNegMu3DMthEff->GetBinContent(negPtBin, negEtaBin, negPhiBin);
+                trigEff = 1 - (1 - hPosMu3DTrigEff->GetBinContent(posPtBin, posEtaBin, posPhiBin)) * (1 - hNegMu3DTrigEff->GetBinContent(negPtBin, negEtaBin, negPhiBin));
+                
 
                 totEff = trkEff * trigEff;
                 //cout << "EffCorr: " << 1/totEff << endl;
@@ -812,3 +837,45 @@ Int_t grabEtaIdx(Double_t eta)
 
     return etaIdx;
 }
+
+double_t etaToY(double_t eta, double_t mass, double_t pt) 
+{
+    double_t theta = 2 * atan(exp(-eta));
+    double_t pz = pt / tan(theta); // 计算纵向动量
+    double_t energy = sqrt(pt * pt + pz * pz + mass * mass);
+    double_t rapidity = 0.5 * log((energy + pz) / (energy - pz));
+    return rapidity;
+
+}
+
+double_t yyToy_mumu(double_t y1, double_t y2) 
+{
+    return 0.5 * log((exp(y1) + exp(y2)) / (exp(-y1) + exp(-y2)));
+}
+
+double_t PhotonEnergy(double_t y_mu_mu) 
+{
+    double_t m_mumu_const = 211.32;  // 缪子对的静止质量 (MeV/c^2)
+    return 0.5 * m_mumu_const * exp(y_mu_mu); // 计算 k
+}
+
+double_t m_mumu(double_t posPt, double_t posEta, double_t posPhi, double_t posy,double_t negPt, double_t negEta, double_t negPhi, double_t negy) 
+{
+    double_t mass = 0.10566;  // 缪子静止质量 (GeV/c^2)
+    
+    // 计算动量分量和总能量
+    double_t posPz = posPt * sinh(posy);
+    double_t negPz = negPt * sinh(negy);
+    double_t posE = sqrt(posPt * posPt + posPz * posPz + mass * mass);
+    double_t negE = sqrt(negPt * negPt + negPz * negPz + mass * mass);
+    double_t posPx = posPt * cos(posPhi), posPy = posPt * sin(posPhi);
+    double_t negPx = negPt * cos(negPhi), negPy = negPt * sin(negPhi);
+
+    // 总能量与总动量
+    double_t totalE = posE + negE;
+    double_t totalPx = posPx + negPx, totalPy = posPy + negPy, totalPz = posPz + negPz;
+    double_t totalP2 = totalPx * totalPx + totalPy * totalPy + totalPz * totalPz;
+
+    return sqrt(totalE * totalE - totalP2); // 系统质量
+}
+

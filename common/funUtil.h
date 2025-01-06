@@ -1,4 +1,4 @@
-#include "/Users/syang/work/run2/upcDimuon/common/constants.h"
+#include "/Users/bulubulubulu/Documents/GitHub/jpsiAnaCode/common/constants.h"
 
 // *** Initialization ***
 TH1D* hZDC[nDirs];
@@ -41,7 +41,7 @@ Bool_t init(TString hfVetoType="Default"){
         }
     }
 
-    TFile *fEff = TFile::Open("/Users/syang/work/run2/upcDimuon/simulation/effPlots_GammaGamma/3DMthEffAndTrigEff.root");
+    TFile *fEff = TFile::Open("/Users/bulubulubulu/Documents/GitHub/jpsiAnaCode/common/3DMthEffAndTrigEff.root");
     //TFile *fEff = TFile::Open("/Users/syang/work/run2/upcDimuon/simulation/effPlots_GammaGamma_woVtxAndNtkHPSel/3DMthEffAndTrigEff.root");
     if(!fEff->IsOpen()){
         cout<<"Failed to open 3-D single efficiencies !"<<endl;
@@ -60,7 +60,7 @@ Bool_t init(TString hfVetoType="Default"){
     }
 
     // For generating pileup matrix in Zero Bias data
-    TFile *fLumi_UPC = TFile::Open("/Users/syang/work/run2/upcDimuon/anaUPCLumi/InstantLumvsLSNbvsRunNb_singleMuUPC.root");
+    TFile *fLumi_UPC = TFile::Open("/Users/bulubulubulu/Documents/GitHub/jpsiAnaCode/common/InstantLumvsLSNbvsRunNb_singleMuUPC.root");
     if(!fLumi_UPC->IsOpen()){
         cout<<"Failed to open UPC instantaneous luminosity file !"<<endl;
         return kFALSE;
@@ -69,7 +69,7 @@ Bool_t init(TString hfVetoType="Default"){
         hLumvsLSvsRun_UPC = (TH2D *)fLumi_UPC->Get("hLumvsLSvsRun_UPC");
     }
 
-    TFile *fLumi_ZB = TFile::Open("/Users/syang/work/run2/upcDimuon/anaZBLumi/InstantLumvsLSNbvsRunNb_ZeroBias.root");
+    TFile *fLumi_ZB = TFile::Open("/Users/bulubulubulu/Documents/GitHub/jpsiAnaCode/common/InstantLumvsLSNbvsRunNb_ZeroBias.root");
     if(!fLumi_ZB->IsOpen()){
         cout<<"Failed to open Zero Bias instantaneous luminosity file !"<<endl;
         return kFALSE;
@@ -80,7 +80,7 @@ Bool_t init(TString hfVetoType="Default"){
 
     memset(corrMatrix, 0, sizeof(corrMatrix));
 
-    ifstream inData(Form("/Users/syang/work/run2/upcDimuon/zerobias/corrMatrix_%s.dat", hfVetoType.Data()));
+    ifstream inData(Form("/Users/bulubulubulu/Documents/GitHub/jpsiAnaCode/common/corrMatrix_%s.dat", hfVetoType.Data()));
     if(!inData.is_open()){
         cout<<"Failed to open correction matrix data !"<<endl;
         return kFALSE;

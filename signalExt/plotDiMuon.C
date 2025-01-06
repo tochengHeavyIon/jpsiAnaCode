@@ -436,7 +436,7 @@ void plotDiMuon(Bool_t effCorr = kTRUE, Bool_t applyTnPSF = kFALSE, Bool_t incHa
         setHisto(hAsyPhi[i], mMarker[i], mSize[i], mColor[i], mColor[i], 2);
         hAsyPhi[i]->Scale(1. / hAsyPhi[i]->GetBinContent(1));
         hAsyPhi[i]->SetMinimum(5.e-4);
-        hAsyPhi[i]->GetXaxis()->SetRangeUser(asyPhiCoreLow, asyPhiCoreHi);
+        hAsyPhi[i]->GetXaxis()->SetRangeUser(PhiCoreLow, asyPhiCoreHi);
         if (i == 0)
             hAsyPhi[i]->Draw("hist");
         else
@@ -1235,22 +1235,25 @@ void estimatePurity()
         for(Int_t ineu = 0; ineu < nNeus; ineu++){
             binLow   = hZDC[idir]->FindBin(mNeuZDCLow[idir][ineu] + mTinyOffNum);
             binHi    = hZDC[idir]->FindBin(mNeuZDCHi[idir][ineu] - mTinyOffNum);
-
+            
+            //当ZDC判断中子数为0n时 没有更低的中子数对判断造成影响 and neuContamHi是 1n Gauss分布的尾巴在0n区间的部分
             if(ineu == 0){
                 neuContamLow[idir][ineu] = 0;
                 neuContamHi[idir][ineu]  = singleGaus[idir][ineu]->Integral(mNeuZDCLow[idir][ineu], mNeuZDCHi[idir][ineu]) / binWidth / hZDC[idir]->Integral(binLow, binHi); // the gaussian function index for "nNeu = 1" is 0, and so on
             }
+            //当ZDC判断中子数为Xn时 没有更高的中子数对判断造成影响 and neuContamLow是 1n Gauss分布的尾巴在Xn区间的部分
             else if(ineu == nNeus-1){
                 neuContamLow[idir][ineu] = singleGaus[idir][ineu-2]->Integral(mNeuZDCLow[idir][ineu], mNeuZDCHi[idir][ineu]) / binWidth / hZDC[idir]->Integral(binLow, binHi);
                 neuContamHi[idir][ineu]  = 0;
             }
+            //当ZDC判断中子数为1n时 0n部分的分布不会污染1n部分 and neuContamHi是 Xn Gauss分布的尾巴在1n区间的部分
             else{
                 if(ineu == 1) neuContamLow[idir][ineu] = 0;
                 else          neuContamLow[idir][ineu] = singleGaus[idir][ineu-2]->Integral(mNeuZDCLow[idir][ineu], mNeuZDCHi[idir][ineu]) / multiGaus[idir]->Integral(mNeuZDCLow[idir][ineu], mNeuZDCHi[idir][ineu]);
 
                 neuContamHi[idir][ineu] = singleGaus[idir][ineu]->Integral(mNeuZDCLow[idir][ineu], mNeuZDCHi[idir][ineu]) / multiGaus[idir]->Integral(mNeuZDCLow[idir][ineu], mNeuZDCHi[idir][ineu]);
             }
-
+            //这里的纯度定义只关注于 ZDC判断中子数区间内 别的部分对其判断造成的影响 - ZDC判断的准确性
             neuPur[idir][ineu] = 1 - neuContamLow[idir][ineu] - neuContamHi[idir][ineu];
         }
     }
