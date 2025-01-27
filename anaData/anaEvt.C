@@ -63,7 +63,7 @@ void anaEvt(Bool_t incHadron = kFALSE, TString hfVetoType="Default")
         return;
     }
 
-    const auto& inputFile = "../rootfiles/VertexCompositeTree_HIForward_HIRun2018_04Apr2019_DiMuMassMin0_20191206.root";
+    const auto& inputFile = "../rootfiles/dimuana_data.root";
 
     const auto& csTreeDir = "dimucontana";           // For MC use dimucontana_mc
     const auto& wsTreeDir = "dimucontana_wrongsign"; // For MC use dimucontana_wrongsign_mc
