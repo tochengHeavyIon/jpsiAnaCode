@@ -1,7 +1,7 @@
-#include "/Users/bulubulubulu/Documents/GitHub/jpsiAnaCode/common/headers.h"
-#include "/Users/bulubulubulu/Documents/GitHub/jpsiAnaCode/common/VertexCompositeTree.h"
-#include "/Users/bulubulubulu/Documents/GitHub/jpsiAnaCode/common/funUtil.h"
-#include "/Users/bulubulubulu/Documents/GitHub/jpsiAnaCode/common/tnp_weight_lowptPbPb.h"
+#include "/afs/ihep.ac.cn/users/z/zhangyu1/bishe/jpsiAnaCode/common/headers.h"
+#include "/afs/ihep.ac.cn/users/z/zhangyu1/bishe/jpsiAnaCode/common/VertexCompositeTree.h"
+#include "/afs/ihep.ac.cn/users/z/zhangyu1/bishe/jpsiAnaCode/common/funUtil.h"
+#include "/afs/ihep.ac.cn/users/z/zhangyu1/bishe/jpsiAnaCode/common/tnp_weight_lowptPbPb.h"
 
 TH1D *hnEvts;
 TH2D *hCenvsTrig;
@@ -71,6 +71,11 @@ TH2D *hAsyPhivsM_Neu2[nNeus][nDirs];
 TH2D *hAsyPhivsRap_Neu[nNeus][nNeus];
 TH2D *hAsyPhivsRap_Neu2[nNeus][nDirs];
 
+TH1D *hEvtvsCostheta;
+TH1D *hEvtvsM_mumu;
+TH1D *hEvtvsk_max;
+TH1D *hEvtvsk_min;
+
 Bool_t   goodTrack(VertexCompositeTree& evtTree, const int icand);
 Int_t    grabNeutronNum(Int_t dirIdx, Double_t ranNum, Double_t prob[][nNeus]);
 Int_t    grabNeutronNum(Int_t dirIdx, Double_t zdc);
@@ -90,7 +95,6 @@ double_t PhotonEnergy(double_t y_mu_mu);
 double_t m_mumu(double_t posPt, double_t posEta, double_t posPhi, double_t posy,double_t negPt, double_t negEta, double_t negPhi, double_t negy);
 
 
-
 // *** load UPC TnP ***
 const Int_t nEtaBins = 4;
 Double_t    etaBoundary[nEtaBins+1] = {0, 1.2, 1.8, 2.1, 2.4};
@@ -99,7 +103,7 @@ TFile *fUpcTnp = 0x0;
 TH1D  *hSFStat_MuIdTnp[nEtaBins];
 TH1D  *hSFStat_TrigTnp[nEtaBins];
 
-Bool_t loadUpcTnPFile();
+// Bool_t loadUpcTnPFile();
 Int_t  grabEtaIdx(Double_t eta);
 // ******
 
@@ -118,7 +122,7 @@ void anaEvt(Bool_t effCorr = kTRUE, Bool_t applyTnPSF = kFALSE, Bool_t incHadron
         return;
     }
 
-    const auto& inputFile = "/Users/bulubulubulu/Desktop/bishe/dimuana_part1.root";
+    const auto& inputFile = "/publicfs/cms/user/tocheng/HeavyIon/UPC/2018A/dimuana_data.root";
 
     const auto& csTreeDir = "dimucontana";           // For MC use dimucontana_mc
     const auto& wsTreeDir = "dimucontana_wrongsign"; // For MC use dimucontana_wrongsign_mc
@@ -141,10 +145,10 @@ void anaEvt(Bool_t effCorr = kTRUE, Bool_t applyTnPSF = kFALSE, Bool_t incHadron
         return;
     }
 
-    if(!loadUpcTnPFile()){
-        cout<<"Failed to load UPC TnP file !"<<endl;
-        return;
-    }
+    // if(!loadUpcTnPFile()){
+    //     cout<<"Failed to load UPC TnP file !"<<endl;
+    //     return;
+    // }
 
     bookHistos();
 
@@ -383,39 +387,6 @@ void anaEvt(Bool_t effCorr = kTRUE, Bool_t applyTnPSF = kFALSE, Bool_t incHadron
                 Double_t trkEff = 1;
                 Double_t trigEff = 1;
 
-                // if(applyTnPSF){
-                //     trkEff  = hPosMu3DMthEff->GetBinContent(posPtBin, posEtaBin, posPhiBin) * hNegMu3DMthEff->GetBinContent(negPtBin, negEtaBin, negPhiBin);
-                //     trkEff *= tnp_weight_trk_pbpb(posEta) * tnp_weight_trk_pbpb(negEta); 
-                //     //trkEff *= tnp_weight_muid_pbpb(posPt, posEta) * tnp_weight_muid_pbpb(negPt, negEta); 
-
-                //     ////trigEff  = 1 - (1 - hPosMu3DTrigEff->GetBinContent(posPtBin, posEtaBin, posPhiBin)) * (1 - hNegMu3DTrigEff->GetBinContent(negPtBin, negEtaBin, negPhiBin));
-                //     ////trigEff *= tnp_weight_trg_pbpb(posPt, posEta, 2, 0) * tnp_weight_trg_pbpb(negPt, negEta, 2, 0);
-
-                //     //trigEff = 1 - (1 - hPosMu3DTrigEff->GetBinContent(posPtBin, posEtaBin, posPhiBin)*tnp_weight_trg_pbpb(posPt, posEta, 2, 0)) * (1 - hNegMu3DTrigEff->GetBinContent(negPtBin, negEtaBin, negPhiBin)*tnp_weight_trg_pbpb(negPt, negEta, 2, 0));
-
-                //     Int_t posEtaIdx = grabEtaIdx(posEta);
-                //     Int_t negEtaIdx = grabEtaIdx(negEta);
-
-                //     if(posEtaIdx<0 || negEtaIdx<0){
-                //         cout<<"Invalid eta idx found in TnP SF applying"<<endl;
-                //         return;
-                //     }
-
-                //     Int_t posPtIdx = hSFStat_TrigTnp[posEtaIdx]->GetXaxis()->FindBin(posPt);
-                //     posPtIdx = posPtIdx > hSFStat_TrigTnp[posEtaIdx]->GetNbinsX() ? hSFStat_TrigTnp[posEtaIdx]->GetNbinsX() : posPtIdx;
-
-                //     Int_t negPtIdx = hSFStat_TrigTnp[negEtaIdx]->GetXaxis()->FindBin(negPt);
-                //     negPtIdx = negPtIdx > hSFStat_TrigTnp[negEtaIdx]->GetNbinsX() ? hSFStat_TrigTnp[negEtaIdx]->GetNbinsX() : negPtIdx;
-
-                //     Double_t posMuIdTnP_SF = hSFStat_MuIdTnp[posEtaIdx]->GetBinContent(posPtIdx);
-                //     Double_t negMuIdTnP_SF = hSFStat_MuIdTnp[negEtaIdx]->GetBinContent(negPtIdx);
-                //     Double_t posTrigTnP_SF = hSFStat_TrigTnp[posEtaIdx]->GetBinContent(posPtIdx);
-                //     Double_t negTrigTnP_SF = hSFStat_TrigTnp[negEtaIdx]->GetBinContent(negPtIdx);
-
-                //     trkEff *= posMuIdTnP_SF * negMuIdTnP_SF;
-                //     trigEff = 1 - (1 - hPosMu3DTrigEff->GetBinContent(posPtBin, posEtaBin, posPhiBin)*posTrigTnP_SF) * (1 - hNegMu3DTrigEff->GetBinContent(negPtBin, negEtaBin, negPhiBin)*negTrigTnP_SF);
-                // }
-                
                 trkEff  = hPosMu3DMthEff->GetBinContent(posPtBin, posEtaBin, posPhiBin) * hNegMu3DMthEff->GetBinContent(negPtBin, negEtaBin, negPhiBin);
                 trigEff = 1 - (1 - hPosMu3DTrigEff->GetBinContent(posPtBin, posEtaBin, posPhiBin)) * (1 - hNegMu3DTrigEff->GetBinContent(negPtBin, negEtaBin, negPhiBin));
                 
@@ -433,6 +404,11 @@ void anaEvt(Bool_t effCorr = kTRUE, Bool_t applyTnPSF = kFALSE, Bool_t incHadron
             hPt2vsM->Fill(mass, pt*pt, 1/totEff);
             hAsyPhivsM->Fill(mass, asyPhi, 1/totEff);
             hAsyPtvsM->Fill(mass, asyPt, 1/totEff);
+
+            hEvtvsCostheta->Fill(costheta, 1/totEff);
+            hEvtvsM_mumu->Fill(SysM_mumu, 1/totEff);
+            hEvtvsk_max->Fill(k_max, 1/totEff);
+            hEvtvsk_min->Fill(k_min, 1/totEff);
 
             if(mass>massLow[0] && mass<massHi[nMBins-1]){
                 hAsyPhivsRap->Fill(y, asyPhi, 1/totEff);
@@ -602,6 +578,11 @@ void bookHistos()
     hNtrkHPvsNtrkofflinevsCen_Sel = new TH3D("hNtrkHPvsNtrkofflinevsCen_Sel", "hNtrkHPvsNtrkofflinevsCen_Sel; Centrality; N_{trk}^{offline}; N_{trk}^{HP}", 200, 0, 200, 100, 0, 100, 100, 0, 100);
     hNtrkHP_2SoftMuons = new TH1D("hNtrkHP_2SoftMuons", "hNtrkHP_2SoftMuons; N_{trk}^{HP}", 100, 0, 100);
 
+    hEvtvsCostheta = new TH1D("hEvtvsCostheta", "hEvtvsCostheta; cos #theta", 100, -1, 1);
+    hEvtvsM_mumu = new TH1D("hEvtvsM_mumu", "hEvtvsM_mumu; M_{#mu#mu} (GeV/c^{2})", 52, 8, 60);
+    hEvtvsk_max = new TH1D("hEvtvsk_max", "hEvtvsk_max; k_{max} (GeV)", 52, 8, 60);
+    hEvtvsk_min = new TH1D("hEvtvsk_min", "hEvtvsk_min; k_{min} (GeV)", 100, 0, 100);
+
     for(Int_t idir = 0; idir < nDirs; idir++){
         hZDCvsNeuNum[idir] = new TH2D(Form("hZDC%svsNeuNum", mDir[idir].Data()), Form("; # of Neutruon; ZDC%s", mDir[idir].Data()), 5, -0.5, 4.5, mHistZdcBins*4, mHistZdcLow*4, mHistZdcHi*4);
 
@@ -738,6 +719,11 @@ void writeHistos(TString fileName)
     hDeltaPhivsM->Write();
     hDeltaPhivsPt->Write();
 
+    hEvtvsCostheta->Write();
+    hEvtvsM_mumu->Write();
+    hEvtvsk_max->Write();
+    hEvtvsk_min->Write();
+
     fOut->Close();
 }
 
@@ -806,24 +792,24 @@ Double_t shiftToPi(Double_t dPhi)
     return deltaPhi;
 }
 
-Bool_t loadUpcTnPFile()
-{
-    Bool_t loadFlag = kTRUE;
+// Bool_t loadUpcTnPFile()
+// {
+//     Bool_t loadFlag = kTRUE;
 
-    //fUpcTnp = TFile::Open("/Users/syang/work/run2/upcDimuon/TnPStudy/plots_DatavsMC_woNtrkHPSel/upcTnP.root");
-    fUpcTnp = TFile::Open("/Users/syang/work/run2/upcDimuon/TnPStudy/plots_DatavsMC_wNtrkHPSel/upcTnP.root");
-    if(!fUpcTnp){
-        loadFlag = kFALSE;
-    }
-    else{
-        for(Int_t ieta=0; ieta<nEtaBins; ieta++){
-            hSFStat_MuIdTnp[ieta] = (TH1D *)fUpcTnp->Get(Form("hSFStat_MuIdTnp_EtaBin%d", ieta));
-            hSFStat_TrigTnp[ieta] = (TH1D *)fUpcTnp->Get(Form("hSFStat_TrigTnp_EtaBin%d", ieta));
-        }
-    }
+//     //fUpcTnp = TFile::Open("/Users/syang/work/run2/upcDimuon/TnPStudy/plots_DatavsMC_woNtrkHPSel/upcTnP.root");
+//     fUpcTnp = TFile::Open("/Users/syang/work/run2/upcDimuon/TnPStudy/plots_DatavsMC_wNtrkHPSel/upcTnP.root");
+//     if(!fUpcTnp){
+//         loadFlag = kFALSE;
+//     }
+//     else{
+//         for(Int_t ieta=0; ieta<nEtaBins; ieta++){
+//             hSFStat_MuIdTnp[ieta] = (TH1D *)fUpcTnp->Get(Form("hSFStat_MuIdTnp_EtaBin%d", ieta));
+//             hSFStat_TrigTnp[ieta] = (TH1D *)fUpcTnp->Get(Form("hSFStat_TrigTnp_EtaBin%d", ieta));
+//         }
+//     }
 
-    return loadFlag;
-}
+//     return loadFlag;
+// }
 
 Int_t grabEtaIdx(Double_t eta)
 {
@@ -855,7 +841,7 @@ double_t yyToy_mumu(double_t y1, double_t y2)
 
 double_t PhotonEnergy(double_t y_mu_mu) 
 {
-    double_t m_mumu_const = 211.32;  // 缪子对的静止质量 (MeV/c^2)
+    double_t m_mumu_const = 211.32 / 1000.0;  // 缪子对的静止质量 (GeV/c^2)
     return 0.5 * m_mumu_const * exp(y_mu_mu); // 计算 k
 }
 

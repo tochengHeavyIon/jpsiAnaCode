@@ -1,6 +1,6 @@
-#include "/Users/syang/Tools/Macro/headers.h"
-#include "/Users/syang/work/run2/upcDimuon/Utilities/Ntuple/VertexCompositeTree.h"
-#include "/Users/syang/work/run2/upcDimuon/common/funUtil.h"
+#include "/afs/ihep.ac.cn/users/z/zhangyu1/bishe/jpsiAnaCode/common/headers.h"
+#include "/afs/ihep.ac.cn/users/z/zhangyu1/bishe/jpsiAnaCode/common/VertexCompositeTree.h"
+#include "/afs/ihep.ac.cn/users/z/zhangyu1/bishe/jpsiAnaCode/common/funUtil.h"
 
 TH1D *hnEvts;
 TH3D *hVzvsVyvsVx;
@@ -81,7 +81,7 @@ void anaMcEvt(TString fileName = "GammaGamma")
 
     std::string inputFile;
     if(fileName.EqualTo("GammaGamma")){
-        inputFile = "../rootfiles/VertexCompositeTree_STARLIGHT_GGToMuMu_woPtCut_DiMuMC_20191122.root";
+        inputFile = "/publicfs/cms/user/tocheng/HeavyIon/UPC/2018A/dimuana_mc.root";
     }
     else if(fileName.EqualTo("GammaGamma_XnXn")){
         inputFile = "../rootfiles/VertexCompositeTree_STARLIGHT_GGToMuMu_XnXn_woPtCut_DiMuMC_20191125.root";

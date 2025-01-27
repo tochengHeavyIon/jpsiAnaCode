@@ -1,4 +1,4 @@
-#include "/Users/bulubulubulu/Documents/GitHub/jpsiAnaCode/common/constants.h"
+#include "/afs/ihep.ac.cn/users/z/zhangyu1/bishe/jpsiAnaCode/common/constants.h"
 
 // *** Initialization ***
 TH1D* hZDC[nDirs];
@@ -25,7 +25,8 @@ const Int_t nSces = 9;
 Double_t    corrMatrix[nSces][nSces];
 
 Bool_t init(TString hfVetoType="Default"){
-    TFile *fNeu = TFile::Open("/Users/syang/work/run2/upcDimuon/neuDecouple/neuDecouple/neutronDecouple.root");
+    // TFile *fNeu = TFile::Open("/Users/syang/work/run2/upcDimuon/neuDecouple/neuDecouple/neutronDecouple.root");
+    TFile *fNeu = TFile::Open("/publicfs/cms/user/tocheng/HeavyIon/UPC/2018A/dimuana_data.root");
     if(!fNeu->IsOpen()){
         cout<<"Failed to open neutronDecouple.root !"<<endl;
         return kFALSE;
@@ -41,7 +42,7 @@ Bool_t init(TString hfVetoType="Default"){
         }
     }
 
-    TFile *fEff = TFile::Open("/Users/bulubulubulu/Documents/GitHub/jpsiAnaCode/common/3DMthEffAndTrigEff.root");
+    TFile *fEff = TFile::Open("/afs/ihep.ac.cn/users/z/zhangyu1/bishe/jpsiAnaCode/common/3DMthEffAndTrigEff.root");
     //TFile *fEff = TFile::Open("/Users/syang/work/run2/upcDimuon/simulation/effPlots_GammaGamma_woVtxAndNtkHPSel/3DMthEffAndTrigEff.root");
     if(!fEff->IsOpen()){
         cout<<"Failed to open 3-D single efficiencies !"<<endl;
@@ -60,7 +61,7 @@ Bool_t init(TString hfVetoType="Default"){
     }
 
     // For generating pileup matrix in Zero Bias data
-    TFile *fLumi_UPC = TFile::Open("/Users/bulubulubulu/Documents/GitHub/jpsiAnaCode/common/InstantLumvsLSNbvsRunNb_singleMuUPC.root");
+    TFile *fLumi_UPC = TFile::Open("/afs/ihep.ac.cn/users/z/zhangyu1/bishe/jpsiAnaCode/common/InstantLumvsLSNbvsRunNb_singleMuUPC.root");
     if(!fLumi_UPC->IsOpen()){
         cout<<"Failed to open UPC instantaneous luminosity file !"<<endl;
         return kFALSE;
@@ -69,7 +70,7 @@ Bool_t init(TString hfVetoType="Default"){
         hLumvsLSvsRun_UPC = (TH2D *)fLumi_UPC->Get("hLumvsLSvsRun_UPC");
     }
 
-    TFile *fLumi_ZB = TFile::Open("/Users/bulubulubulu/Documents/GitHub/jpsiAnaCode/common/InstantLumvsLSNbvsRunNb_ZeroBias.root");
+    TFile *fLumi_ZB = TFile::Open("/afs/ihep.ac.cn/users/z/zhangyu1/bishe/jpsiAnaCode/common/InstantLumvsLSNbvsRunNb_ZeroBias.root");
     if(!fLumi_ZB->IsOpen()){
         cout<<"Failed to open Zero Bias instantaneous luminosity file !"<<endl;
         return kFALSE;
@@ -80,7 +81,7 @@ Bool_t init(TString hfVetoType="Default"){
 
     memset(corrMatrix, 0, sizeof(corrMatrix));
 
-    ifstream inData(Form("/Users/bulubulubulu/Documents/GitHub/jpsiAnaCode/common/corrMatrix_%s.dat", hfVetoType.Data()));
+    ifstream inData(Form("/afs/ihep.ac.cn/users/z/zhangyu1/bishe/jpsiAnaCode/common/corrMatrix_%s.dat", hfVetoType.Data()));
     if(!inData.is_open()){
         cout<<"Failed to open correction matrix data !"<<endl;
         return kFALSE;

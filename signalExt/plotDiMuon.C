@@ -1,6 +1,6 @@
-#include "/Users/syang/Tools/Macro/headers.h"
-#include "/Users/syang/Tools/Macro/function.C"
-#include "/Users/syang/work/run2/upcDimuon/common/funUtil.h"
+#include "/afs/ihep.ac.cn/users/z/zhangyu1/bishe/jpsiAnaCode/common/headers.h"
+#include "/afs/ihep.ac.cn/users/z/zhangyu1/bishe/jpsiAnaCode/common/function.C"
+#include "/afs/ihep.ac.cn/users/z/zhangyu1/bishe/jpsiAnaCode/common/funUtil.h"
 
 const Double_t mTinyOffNum = 1.e-6;
 const Double_t mOffSet = 0.1;
@@ -146,6 +146,11 @@ void plotDiMuon(Bool_t effCorr = kTRUE, Bool_t applyTnPSF = kFALSE, Bool_t incHa
     TH3D* hMvsPtvsRap     = (TH3D*)f->Get("hMvsPtvsRap");
     TH2D* hAsyPhivsM   = (TH2D*)f->Get("hAsyPhivsM");
 
+    TH1D *hEvtvsCostheta = (TH1D *)f->Get("hEvtvsCostheta");
+    TH1D *hEvtvsM_mumu = (TH1D *)f->Get("hEvtvsM_mumu");
+    TH1D *hEvtvsk_max = (TH1D *)f->Get("hEvtvsk_max");
+    TH1D *hEvtvsk_min = (TH1D *)f->Get("hEvtvsk_min");
+
     TH2D* hAsyPhivsM_Neu[nNeus][nNeus];
     for (Int_t ip = 0; ip < nNeus; ip++) {
         for (Int_t im = 0; im < nNeus; im++) {
@@ -178,6 +183,51 @@ void plotDiMuon(Bool_t effCorr = kTRUE, Bool_t applyTnPSF = kFALSE, Bool_t incHa
     gPad->SetLogz(1);
     hPreScalevsTrig->Draw("colz");
     c1->SaveAs(Form("%s/PreScalevsTrig.png", dirName.Data()));
+
+    c1->cd();
+    hEvtvsCostheta->SetLineWidth(4);
+    hEvtvsCostheta->GetXaxis()->SetLabelSize(0.045);
+    hEvtvsCostheta->GetXaxis()->SetRangeUser(0, 1);
+    hEvtvsCostheta->GetYaxis()->SetRangeUser(0, 0.9e6);
+    hEvtvsCostheta->SetMarkerColor(4);
+    hEvtvsCostheta->SetMarkerSize(1.6);
+    hEvtvsCostheta->Draw("hist");
+    c1->SaveAs(Form("%s/EvtvsCostheta.png", dirName.Data()));
+
+    c1->cd();
+    hEvtvsM_mumu->SetLineWidth(4);
+    hEvtvsM_mumu->GetXaxis()->SetLabelSize(0.045);
+    hEvtvsM_mumu->GetXaxis()->SetRangeUser(8, 60);
+    hEvtvsM_mumu->GetYaxis()->SetRangeUser(0, 0.9e6);
+    hEvtvsM_mumu->SetMarkerColor(4);
+    hEvtvsM_mumu->SetMarkerSize(1.6);
+    hEvtvsM_mumu->Draw("hist");
+    c1->SaveAs(Form("%s/EvtvsM_mumu.png", dirName.Data()));
+
+    c1->cd();
+    gPad->SetLogx(1);
+    gPad->SetLogy(1);
+    hEvtvsk_max->SetLineWidth(4);
+    hEvtvsk_max->GetXaxis()->SetLabelSize(0.045);
+    hEvtvsk_max->GetXaxis()->SetRangeUser(0, 1e3);
+    hEvtvsk_max->GetYaxis()->SetRangeUser(0, 0.9e6);
+    hEvtvsk_max->SetMarkerColor(4);
+    hEvtvsk_max->SetMarkerSize(1.6);
+    hEvtvsk_max->Draw("hist");
+    gPad->SetLogx(1);
+    gPad->SetLogy(1);
+    hEvtvsk_min->SetLineWidth(4);
+    hEvtvsk_min->GetXaxis()->SetLabelSize(0.045);
+    hEvtvsk_min->GetXaxis()->SetRangeUser(0, 1e3);
+    hEvtvsk_min->GetYaxis()->SetRangeUser(0, 0.9e6);
+    hEvtvsk_min->SetMarkerColor(2);
+    hEvtvsk_min->SetMarkerSize(1.6);
+    hEvtvsk_min->Draw("samehist");
+    TLegend *leg2 = new TLegend(0.7, 0.7, 0.9, 0.9);
+    leg2->AddEntry(hEvtvsk_max, "hEvtvsk_max", "l");
+    leg2->AddEntry(hEvtvsk_min, "hEvtvsk_min", "l");
+    leg2->Draw();
+    c1->SaveAs(Form("%s/hEvtvsk.png", dirName.Data()));
 
     TH2D* hVyvsVx = (TH2D*)hVzvsVyvsVx->Project3D("hVyvsVx_yx");
     TH1D* hVz = (TH1D*)hVzvsVyvsVx->ProjectionZ("hVz");
@@ -436,7 +486,7 @@ void plotDiMuon(Bool_t effCorr = kTRUE, Bool_t applyTnPSF = kFALSE, Bool_t incHa
         setHisto(hAsyPhi[i], mMarker[i], mSize[i], mColor[i], mColor[i], 2);
         hAsyPhi[i]->Scale(1. / hAsyPhi[i]->GetBinContent(1));
         hAsyPhi[i]->SetMinimum(5.e-4);
-        hAsyPhi[i]->GetXaxis()->SetRangeUser(PhiCoreLow, asyPhiCoreHi);
+        hAsyPhi[i]->GetXaxis()->SetRangeUser(asyPhiCoreLow, asyPhiCoreHi);
         if (i == 0)
             hAsyPhi[i]->Draw("hist");
         else
