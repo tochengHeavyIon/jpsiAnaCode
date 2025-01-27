@@ -219,5 +219,19 @@ void plotZDC(Bool_t isPaper=kTRUE, Bool_t drawNeuRange = 1)
     c1->SaveAs(Form("%s/zdcPull.pdf", dir.Data()));
     c1->SaveAs(Form("%s/zdcPull.png", dir.Data()));
 
+    TFile* fOut = new TFile("neutronDecouple.root", "recreate");
+
+    fOut->cd();
+    hZDC[0]->Write();
+    hZDC[1]->Write(); 
+
+    multiGaus[0]->Write();
+    multiGaus[1]->Write();
+    for(Int_t iGaus=0; iGaus<nGaus; iGaus++){
+       singleGaus[0][iGaus]->Write();
+       singleGaus[1][iGaus]->Write();
+    }
+    fOut->Close();
+
     cout << "End of program !" << endl;
 }
