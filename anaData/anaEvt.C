@@ -90,7 +90,7 @@ double_t etaToY(double_t eta, double_t mass, double_t pt);
 
 double_t yyToy_mumu(double_t y1, double_t y2);
 
-double_t PhotonEnergy(double_t y_mu_mu);
+double_t PhotonEnergy(double_t y_mu_mu, double_t SysM_mumu);
 
 double_t m_mumu(double_t posPt, double_t posEta, double_t posPhi, double_t posy,double_t negPt, double_t negEta, double_t negPhi, double_t negy);
 
@@ -331,17 +331,21 @@ void anaEvt(Bool_t effCorr = kTRUE, Bool_t applyTnPSF = kFALSE, Bool_t incHadron
             double_t posy      = etaToY(posEta, mass, posPt);
             double_t negy      = etaToY(negEta, mass, negPt);
             
-            double_t costheta  = 0;
-            if (posy > 0)  double costheta = tanh(0.5*(posy-negy));
-            else double costheta = tanh(0.5*(negy-posy));
+            double_t costheta = 0;
+            if (posy > 0) {
+                costheta = tanh(0.5 * (posy - negy));
+            } else {
+                costheta = tanh(0.5 * (negy - posy));
+            }
+
 
             double_t y_mumu = yyToy_mumu(posy, negy);
 
-            //from the final state muon pair, calculate the photon energy
-            double_t k_max = PhotonEnergy(y_mumu);
-            double_t k_min = PhotonEnergy(-y_mumu);
-
             double_t SysM_mumu = m_mumu(posPt, posEta, posPhi, posy, negPt, negEta, negPhi, negy);
+
+            //from the final state muon pair, calculate the photon energy
+            double_t k_max = PhotonEnergy(y_mumu, SysM_mumu);
+            double_t k_min = PhotonEnergy(-y_mumu, SysM_mumu);
             
             if(
                     mass>massLow[0] && mass<massHi[nMBins-1]
@@ -839,10 +843,9 @@ double_t yyToy_mumu(double_t y1, double_t y2)
     return 0.5 * log((exp(y1) + exp(y2)) / (exp(-y1) + exp(-y2)));
 }
 
-double_t PhotonEnergy(double_t y_mu_mu) 
+double_t PhotonEnergy(double_t y_mu_mu, double_t SysM_mumu) 
 {
-    double_t m_mumu_const = 211.32 / 1000.0;  // 缪子对的静止质量 (GeV/c^2)
-    return 0.5 * m_mumu_const * exp(y_mu_mu); // 计算 k
+    return 0.5 * SysM_mumu * exp(y_mu_mu); // 计算 k
 }
 
 double_t m_mumu(double_t posPt, double_t posEta, double_t posPhi, double_t posy,double_t negPt, double_t negEta, double_t negPhi, double_t negy) 
