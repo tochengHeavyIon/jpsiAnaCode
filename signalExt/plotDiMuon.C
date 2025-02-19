@@ -146,10 +146,10 @@ void plotDiMuon(Bool_t effCorr = kTRUE, Bool_t applyTnPSF = kFALSE, Bool_t incHa
     TH3D* hMvsPtvsRap     = (TH3D*)f->Get("hMvsPtvsRap");
     TH2D* hAsyPhivsM   = (TH2D*)f->Get("hAsyPhivsM");
 
-    TH1D *hEvtvsCostheta = (TH1D *)f->Get("hEvtvsCostheta");
-    TH1D *hEvtvsM_mumu = (TH1D *)f->Get("hEvtvsM_mumu");
-    TH1D *hEvtvsk_max = (TH1D *)f->Get("hEvtvsk_max");
-    TH1D *hEvtvsk_min = (TH1D *)f->Get("hEvtvsk_min");
+    TH1D *hSigmavsCostheta = (TH1D *)f->Get("hSigmavsCostheta");
+    TH1D *hSigmavsM_mumu = (TH1D *)f->Get("hSigmavsM_mumu");
+    TH1D *hSigmavsk_max = (TH1D *)f->Get("hSigmavsk_max");
+    TH1D *hSigmavsk_min = (TH1D *)f->Get("hSigmavsk_min");
 
     TH2D* hAsyPhivsM_Neu[nNeus][nNeus];
     for (Int_t ip = 0; ip < nNeus; ip++) {
@@ -185,49 +185,51 @@ void plotDiMuon(Bool_t effCorr = kTRUE, Bool_t applyTnPSF = kFALSE, Bool_t incHa
     c1->SaveAs(Form("%s/PreScalevsTrig.png", dirName.Data()));
 
     c1->cd();
-    hEvtvsCostheta->SetLineWidth(4);
-    hEvtvsCostheta->GetXaxis()->SetLabelSize(0.045);
-    hEvtvsCostheta->GetXaxis()->SetRangeUser(0, 1);
-    hEvtvsCostheta->GetYaxis()->SetRangeUser(0, 0.9e6);
-    hEvtvsCostheta->SetMarkerColor(4);
-    hEvtvsCostheta->SetMarkerSize(1.6);
-    hEvtvsCostheta->Draw("hist");
-    c1->SaveAs(Form("%s/EvtvsCostheta.png", dirName.Data()));
+    hSigmavsCostheta->GetXaxis()->SetLabelSize(0.045);
+    hSigmavsCostheta->GetXaxis()->SetRangeUser(-1, 1);
+    hSigmavsCostheta->GetYaxis()->SetTitle("#frac{d#sigma}{dcos#theta}");
+    hSigmavsCostheta->SetMarkerStyle(20);
+    hSigmavsCostheta->SetMarkerColor(kRed);
+    hSigmavsCostheta->SetMarkerSize(1);
+    hSigmavsCostheta->Draw("p");
+    c1->SaveAs(Form("%s/SigmavsCostheta.pdf", dirName.Data()));
 
     c1->cd();
-    hEvtvsM_mumu->SetLineWidth(4);
-    hEvtvsM_mumu->GetXaxis()->SetLabelSize(0.045);
-    hEvtvsM_mumu->GetXaxis()->SetRangeUser(8, 60);
-    hEvtvsM_mumu->GetYaxis()->SetRangeUser(0, 0.9e6);
-    hEvtvsM_mumu->SetMarkerColor(4);
-    hEvtvsM_mumu->SetMarkerSize(1.6);
-    hEvtvsM_mumu->Draw("hist");
-    c1->SaveAs(Form("%s/EvtvsM_mumu.png", dirName.Data()));
+    hSigmavsM_mumu->GetXaxis()->SetLabelSize(0.045);
+    hSigmavsM_mumu->GetXaxis()->SetRangeUser(8, 60);
+    hSigmavsM_mumu->GetYaxis()->SetTitle("#frac{d#sigma}{d#it{M}_{#mu#mu}}");
+    hSigmavsCostheta->SetMarkerStyle(20);
+    hSigmavsCostheta->SetMarkerColor(kRed);
+    hSigmavsCostheta->SetMarkerSize(1);
+    hSigmavsM_mumu->Draw("p");
+    c1->SaveAs(Form("%s/SigmavsM_mumu.pdf", dirName.Data()));
 
     c1->cd();
     gPad->SetLogx(1);
     gPad->SetLogy(1);
-    hEvtvsk_max->SetLineWidth(4);
-    hEvtvsk_max->GetXaxis()->SetLabelSize(0.045);
-    hEvtvsk_max->GetXaxis()->SetRangeUser(0, 1e3);
-    hEvtvsk_max->GetYaxis()->SetRangeUser(0, 0.9e6);
-    hEvtvsk_max->SetMarkerColor(4);
-    hEvtvsk_max->SetMarkerSize(1.6);
-    hEvtvsk_max->Draw("hist");
-    gPad->SetLogx(1);
-    gPad->SetLogy(1);
-    hEvtvsk_min->SetLineWidth(4);
-    hEvtvsk_min->GetXaxis()->SetLabelSize(0.045);
-    hEvtvsk_min->GetXaxis()->SetRangeUser(0, 1e3);
-    hEvtvsk_min->GetYaxis()->SetRangeUser(0, 0.9e6);
-    hEvtvsk_min->SetMarkerColor(2);
-    hEvtvsk_min->SetMarkerSize(1.6);
-    hEvtvsk_min->Draw("samehist");
+    hSigmavsk_max->GetXaxis()->SetTitle("#it{k}_{min,max}[GeV]"); 
+    hSigmavsk_max->GetYaxis()->SetTitle("#frac{d#sigma}{d#it{k}_{min,max}} [#mub/GeV]");
+    hSigmavsk_max->SetMarkerStyle(20);
+    hSigmavsk_max->SetMarkerColor(kRed);
+    hSigmavsk_max->SetMarkerSize(1);
+    hSigmavsk_max->GetXaxis()->SetLabelSize(0.045);
+    hSigmavsk_max->GetXaxis()->SetRangeUser(0.1, 1e4);
+    hSigmavsk_max->GetYaxis()->SetRangeUser(1e-4, 1e2);
+    hSigmavsk_max->Draw("p");
+
+    hSigmavsk_min->SetMarkerStyle(21);
+    hSigmavsk_min->SetMarkerColor(kBlue);
+    hSigmavsk_min->SetMarkerSize(1);
+    hSigmavsk_min->GetXaxis()->SetLabelSize(0.045);
+    hSigmavsk_min->GetXaxis()->SetRangeUser(0.1, 1e4);
+    hSigmavsk_min->GetYaxis()->SetRangeUser(1e-4, 1e2);
+    hSigmavsk_min->Draw("samep");
     TLegend *leg2 = new TLegend(0.7, 0.7, 0.9, 0.9);
-    leg2->AddEntry(hEvtvsk_max, "hEvtvsk_max", "l");
-    leg2->AddEntry(hEvtvsk_min, "hEvtvsk_min", "l");
+    leg2->AddEntry(hSigmavsk_max, "#it{k}_{max}", "p");
+    leg2->AddEntry(hSigmavsk_min, "#it{k}_{min}", "p");
+    leg2->SetTextSize(0.04);
     leg2->Draw();
-    c1->SaveAs(Form("%s/hEvtvsk.png", dirName.Data()));
+    c1->SaveAs(Form("%s/hSigmavsk.pdf", dirName.Data()));
 
     TH2D* hVyvsVx = (TH2D*)hVzvsVyvsVx->Project3D("hVyvsVx_yx");
     TH1D* hVz = (TH1D*)hVzvsVyvsVx->ProjectionZ("hVz");
