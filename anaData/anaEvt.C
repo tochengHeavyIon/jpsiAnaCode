@@ -71,10 +71,10 @@ TH2D *hAsyPhivsM_Neu2[nNeus][nDirs];
 TH2D *hAsyPhivsRap_Neu[nNeus][nNeus];
 TH2D *hAsyPhivsRap_Neu2[nNeus][nDirs];
 
-TH1D *hEvtvsCostheta;
-TH1D *hEvtvsM_mumu;
-TH1D *hEvtvsk_max;
-TH1D *hEvtvsk_min;
+TH1D *hSigmavsCostheta;
+TH1D *hSigmavsM_mumu;
+TH1D *hSigmavsk_max;
+TH1D *hSigmavsk_min;
 
 Bool_t   goodTrack(VertexCompositeTree& evtTree, const int icand);
 Int_t    grabNeutronNum(Int_t dirIdx, Double_t ranNum, Double_t prob[][nNeus]);
@@ -86,9 +86,9 @@ Double_t shiftToPi(Double_t dPhi);
 void bookHistos();
 void writeHistos(TString fileName = "test");
 
-double_t etaToY(double_t eta, double_t mass, double_t pt);
+double_t etaToY(double_t eta, double_t pt);
 
-double_t yyToy_mumu(double_t y1, double_t y2);
+double_t yyToy_mumu(double_t y1, double_t y2, double_t posPt, double_t negPt);
 
 double_t PhotonEnergy(double_t y_mu_mu, double_t SysM_mumu);
 
@@ -328,8 +328,8 @@ void anaEvt(Bool_t effCorr = kTRUE, Bool_t applyTnPSF = kFALSE, Bool_t incHadron
             Double_t negPhi    = csTree.chargeD1()[icand] < 0 ? csTree.PhiD1()[icand] : csTree.PhiD2()[icand]; 
             Bool_t   isNegTrig = csTree.chargeD1()[icand] < 0 ? csTree.trigMuon1()[trigIdx][icand] : csTree.trigMuon2()[trigIdx][icand];
 
-            double_t posy      = etaToY(posEta, mass, posPt);
-            double_t negy      = etaToY(negEta, mass, negPt);
+            double_t posy      = etaToY(posEta, posPt);
+            double_t negy      = etaToY(negEta, negPt);
             
             double_t costheta = 0;
             if (posy > 0) {
@@ -338,16 +338,14 @@ void anaEvt(Bool_t effCorr = kTRUE, Bool_t applyTnPSF = kFALSE, Bool_t incHadron
                 costheta = tanh(0.5 * (negy - posy));
             }
 
-
-            double_t y_mumu = yyToy_mumu(posy, negy);
-
+	    double_t y_mumu = yyToy_mumu(posy, negy, posPt, negPt);
             double_t SysM_mumu = m_mumu(posPt, posEta, posPhi, posy, negPt, negEta, negPhi, negy);
 
             //from the final state muon pair, calculate the photon energy
-            double_t k_max = PhotonEnergy(y_mumu, SysM_mumu);
-            double_t k_min = PhotonEnergy(-y_mumu, SysM_mumu);
+            double_t k_max = PhotonEnergy(abs(y_mumu), SysM_mumu);  
+            double_t k_min = PhotonEnergy(-abs(y_mumu), SysM_mumu); 
             
-            if(
+	    if(
                     mass>massLow[0] && mass<massHi[nMBins-1]
                     && asyPhi<mAlphaCut
               ){
@@ -409,10 +407,10 @@ void anaEvt(Bool_t effCorr = kTRUE, Bool_t applyTnPSF = kFALSE, Bool_t incHadron
             hAsyPhivsM->Fill(mass, asyPhi, 1/totEff);
             hAsyPtvsM->Fill(mass, asyPt, 1/totEff);
 
-            hEvtvsCostheta->Fill(costheta, 1/totEff);
-            hEvtvsM_mumu->Fill(SysM_mumu, 1/totEff);
-            hEvtvsk_max->Fill(k_max, 1/totEff);
-            hEvtvsk_min->Fill(k_min, 1/totEff);
+	    hSigmavsCostheta->Fill(costheta, 1/(totEff*mCMSLum));
+            hSigmavsM_mumu->Fill(SysM_mumu, 1/(totEff*mCMSLum));
+            hSigmavsk_max->Fill(k_max, 1/(totEff*mCMSLum));
+            hSigmavsk_min->Fill(k_min, 1/(totEff*mCMSLum));
 
             if(mass>massLow[0] && mass<massHi[nMBins-1]){
                 hAsyPhivsRap->Fill(y, asyPhi, 1/totEff);
@@ -582,10 +580,10 @@ void bookHistos()
     hNtrkHPvsNtrkofflinevsCen_Sel = new TH3D("hNtrkHPvsNtrkofflinevsCen_Sel", "hNtrkHPvsNtrkofflinevsCen_Sel; Centrality; N_{trk}^{offline}; N_{trk}^{HP}", 200, 0, 200, 100, 0, 100, 100, 0, 100);
     hNtrkHP_2SoftMuons = new TH1D("hNtrkHP_2SoftMuons", "hNtrkHP_2SoftMuons; N_{trk}^{HP}", 100, 0, 100);
 
-    hEvtvsCostheta = new TH1D("hEvtvsCostheta", "hEvtvsCostheta; cos #theta", 100, -1, 1);
-    hEvtvsM_mumu = new TH1D("hEvtvsM_mumu", "hEvtvsM_mumu; M_{#mu#mu} (GeV/c^{2})", 52, 8, 60);
-    hEvtvsk_max = new TH1D("hEvtvsk_max", "hEvtvsk_max; k_{max} (GeV)", 52, 8, 60);
-    hEvtvsk_min = new TH1D("hEvtvsk_min", "hEvtvsk_min; k_{min} (GeV)", 100, 0, 100);
+    hSigmavsCostheta = new TH1D("hSigmavsCostheta", "hSigmavsCostheta; cos #theta", 100, -1, 1);
+    hSigmavsM_mumu = new TH1D("hSigmavsM_mumu", "hSigmavsM_mumu; M_{#mu#mu} (GeV/c^{2})", 52, 8, 60);
+    hSigmavsk_max = new TH1D("hSigmavsk_max", "hSigmavsk_max; k_{max} (GeV)", 52, 8, 60);
+    hSigmavsk_min = new TH1D("hSigmavsk_min", "hSigmavsk_min; k_{min} (GeV)", 100, 0, 100);
 
     for(Int_t idir = 0; idir < nDirs; idir++){
         hZDCvsNeuNum[idir] = new TH2D(Form("hZDC%svsNeuNum", mDir[idir].Data()), Form("; # of Neutruon; ZDC%s", mDir[idir].Data()), 5, -0.5, 4.5, mHistZdcBins*4, mHistZdcLow*4, mHistZdcHi*4);
@@ -723,10 +721,10 @@ void writeHistos(TString fileName)
     hDeltaPhivsM->Write();
     hDeltaPhivsPt->Write();
 
-    hEvtvsCostheta->Write();
-    hEvtvsM_mumu->Write();
-    hEvtvsk_max->Write();
-    hEvtvsk_min->Write();
+    hSigmavsCostheta->Write();
+    hSigmavsM_mumu->Write();
+    hSigmavsk_max->Write();
+    hSigmavsk_min->Write();
 
     fOut->Close();
 }
@@ -828,8 +826,9 @@ Int_t grabEtaIdx(Double_t eta)
     return etaIdx;
 }
 
-double_t etaToY(double_t eta, double_t mass, double_t pt) 
+double_t etaToY(double_t eta, double_t pt) 
 {
+    double_t mass = 0.10566;  // 缪子静止质量 (GeV/c^2)
     double_t theta = 2 * atan(exp(-eta));
     double_t pz = pt / tan(theta); // 计算纵向动量
     double_t energy = sqrt(pt * pt + pz * pz + mass * mass);
@@ -838,9 +837,12 @@ double_t etaToY(double_t eta, double_t mass, double_t pt)
 
 }
 
-double_t yyToy_mumu(double_t y1, double_t y2) 
+double_t yyToy_mumu(double_t y1, double_t y2, double_t p1, double_t p2) 
 {
-    return 0.5 * log((exp(y1) + exp(y2)) / (exp(-y1) + exp(-y2)));
+    double_t mass = 0.10566;  // 缪子静止质量 (GeV/c^2)
+    double mT1 = sqrt(mass * mass + p1 * p1);
+    double mT2 = sqrt(mass * mass + p2 * p2);
+    return 0.5 * log((mT1 * exp(y1) + mT2 * exp(y2)) / (mT1 * exp(-y1) + mT2 * exp(-y2)));
 }
 
 double_t PhotonEnergy(double_t y_mu_mu, double_t SysM_mumu) 
