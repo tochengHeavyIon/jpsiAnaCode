@@ -1,6 +1,6 @@
-#include "/Users/syang/Tools/Macro/headers.h"
-#include "/Users/syang/Tools/Macro/function.C"
-#include "/Users/syang/work/run2/upcDimuon/common/funUtil.h"
+#include "/afs/ihep.ac.cn/users/z/zhangyu1/bishe/jpsiAnaCode/common/headers.h"
+#include "/afs/ihep.ac.cn/users/z/zhangyu1/bishe/jpsiAnaCode/common/function.C"
+#include "/afs/ihep.ac.cn/users/z/zhangyu1/bishe/jpsiAnaCode/common/funUtil.h"
 
 const Double_t mTinyOffNum = 1.e-6;
 const Double_t mOffSet = 0.1;
@@ -146,6 +146,11 @@ void plotDiMuon(Bool_t effCorr = kTRUE, Bool_t applyTnPSF = kFALSE, Bool_t incHa
     TH3D* hMvsPtvsRap     = (TH3D*)f->Get("hMvsPtvsRap");
     TH2D* hAsyPhivsM   = (TH2D*)f->Get("hAsyPhivsM");
 
+    TH1D *hSigmavsCostheta = (TH1D *)f->Get("hSigmavsCostheta");
+    TH1D *hSigmavsM_mumu = (TH1D *)f->Get("hSigmavsM_mumu");
+    TH1D *hSigmavsk_max = (TH1D *)f->Get("hSigmavsk_max");
+    TH1D *hSigmavsk_min = (TH1D *)f->Get("hSigmavsk_min");
+
     TH2D* hAsyPhivsM_Neu[nNeus][nNeus];
     for (Int_t ip = 0; ip < nNeus; ip++) {
         for (Int_t im = 0; im < nNeus; im++) {
@@ -178,6 +183,53 @@ void plotDiMuon(Bool_t effCorr = kTRUE, Bool_t applyTnPSF = kFALSE, Bool_t incHa
     gPad->SetLogz(1);
     hPreScalevsTrig->Draw("colz");
     c1->SaveAs(Form("%s/PreScalevsTrig.png", dirName.Data()));
+
+    c1->cd();
+    hSigmavsCostheta->GetXaxis()->SetLabelSize(0.045);
+    hSigmavsCostheta->GetXaxis()->SetRangeUser(-1, 1);
+    hSigmavsCostheta->GetYaxis()->SetTitle("#frac{d#sigma}{dcos#theta}");
+    hSigmavsCostheta->SetMarkerStyle(20);
+    hSigmavsCostheta->SetMarkerColor(kRed);
+    hSigmavsCostheta->SetMarkerSize(1);
+    hSigmavsCostheta->Draw("p");
+    c1->SaveAs(Form("%s/SigmavsCostheta.pdf", dirName.Data()));
+
+    c1->cd();
+    hSigmavsM_mumu->GetXaxis()->SetLabelSize(0.045);
+    hSigmavsM_mumu->GetXaxis()->SetRangeUser(8, 60);
+    hSigmavsM_mumu->GetYaxis()->SetTitle("#frac{d#sigma}{d#it{M}_{#mu#mu}}");
+    hSigmavsCostheta->SetMarkerStyle(20);
+    hSigmavsCostheta->SetMarkerColor(kRed);
+    hSigmavsCostheta->SetMarkerSize(1);
+    hSigmavsM_mumu->Draw("p");
+    c1->SaveAs(Form("%s/SigmavsM_mumu.pdf", dirName.Data()));
+
+    c1->cd();
+    gPad->SetLogx(1);
+    gPad->SetLogy(1);
+    hSigmavsk_max->GetXaxis()->SetTitle("#it{k}_{min,max}[GeV]"); 
+    hSigmavsk_max->GetYaxis()->SetTitle("#frac{d#sigma}{d#it{k}_{min,max}} [#mub/GeV]");
+    hSigmavsk_max->SetMarkerStyle(20);
+    hSigmavsk_max->SetMarkerColor(kRed);
+    hSigmavsk_max->SetMarkerSize(1);
+    hSigmavsk_max->GetXaxis()->SetLabelSize(0.045);
+    hSigmavsk_max->GetXaxis()->SetRangeUser(0.1, 1e4);
+    hSigmavsk_max->GetYaxis()->SetRangeUser(1e-4, 1e2);
+    hSigmavsk_max->Draw("p");
+
+    hSigmavsk_min->SetMarkerStyle(21);
+    hSigmavsk_min->SetMarkerColor(kBlue);
+    hSigmavsk_min->SetMarkerSize(1);
+    hSigmavsk_min->GetXaxis()->SetLabelSize(0.045);
+    hSigmavsk_min->GetXaxis()->SetRangeUser(0.1, 1e4);
+    hSigmavsk_min->GetYaxis()->SetRangeUser(1e-4, 1e2);
+    hSigmavsk_min->Draw("samep");
+    TLegend *leg2 = new TLegend(0.7, 0.7, 0.9, 0.9);
+    leg2->AddEntry(hSigmavsk_max, "#it{k}_{max}", "p");
+    leg2->AddEntry(hSigmavsk_min, "#it{k}_{min}", "p");
+    leg2->SetTextSize(0.04);
+    leg2->Draw();
+    c1->SaveAs(Form("%s/hSigmavsk.pdf", dirName.Data()));
 
     TH2D* hVyvsVx = (TH2D*)hVzvsVyvsVx->Project3D("hVyvsVx_yx");
     TH1D* hVz = (TH1D*)hVzvsVyvsVx->ProjectionZ("hVz");
@@ -1235,22 +1287,25 @@ void estimatePurity()
         for(Int_t ineu = 0; ineu < nNeus; ineu++){
             binLow   = hZDC[idir]->FindBin(mNeuZDCLow[idir][ineu] + mTinyOffNum);
             binHi    = hZDC[idir]->FindBin(mNeuZDCHi[idir][ineu] - mTinyOffNum);
-
+            
+            //当ZDC判断中子数为0n时 没有更低的中子数对判断造成影响 and neuContamHi是 1n Gauss分布的尾巴在0n区间的部分
             if(ineu == 0){
                 neuContamLow[idir][ineu] = 0;
                 neuContamHi[idir][ineu]  = singleGaus[idir][ineu]->Integral(mNeuZDCLow[idir][ineu], mNeuZDCHi[idir][ineu]) / binWidth / hZDC[idir]->Integral(binLow, binHi); // the gaussian function index for "nNeu = 1" is 0, and so on
             }
+            //当ZDC判断中子数为Xn时 没有更高的中子数对判断造成影响 and neuContamLow是 1n Gauss分布的尾巴在Xn区间的部分
             else if(ineu == nNeus-1){
                 neuContamLow[idir][ineu] = singleGaus[idir][ineu-2]->Integral(mNeuZDCLow[idir][ineu], mNeuZDCHi[idir][ineu]) / binWidth / hZDC[idir]->Integral(binLow, binHi);
                 neuContamHi[idir][ineu]  = 0;
             }
+            //当ZDC判断中子数为1n时 0n部分的分布不会污染1n部分 and neuContamHi是 Xn Gauss分布的尾巴在1n区间的部分
             else{
                 if(ineu == 1) neuContamLow[idir][ineu] = 0;
                 else          neuContamLow[idir][ineu] = singleGaus[idir][ineu-2]->Integral(mNeuZDCLow[idir][ineu], mNeuZDCHi[idir][ineu]) / multiGaus[idir]->Integral(mNeuZDCLow[idir][ineu], mNeuZDCHi[idir][ineu]);
 
                 neuContamHi[idir][ineu] = singleGaus[idir][ineu]->Integral(mNeuZDCLow[idir][ineu], mNeuZDCHi[idir][ineu]) / multiGaus[idir]->Integral(mNeuZDCLow[idir][ineu], mNeuZDCHi[idir][ineu]);
             }
-
+            //这里的纯度定义只关注于 ZDC判断中子数区间内 别的部分对其判断造成的影响 - ZDC判断的准确性
             neuPur[idir][ineu] = 1 - neuContamLow[idir][ineu] - neuContamHi[idir][ineu];
         }
     }

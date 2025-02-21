@@ -22,7 +22,7 @@ void plotZDC(Bool_t isPaper=kTRUE, Bool_t drawNeuRange = 1)
 
     gStyle->SetOptFit(111);
 
-    TFile* f = TFile::Open("../anaData/jpsiHistos/rawSig.root");
+    TFile* f = TFile::Open("/Users/bulubulubulu/Desktop/bishe/rawSig.root");
 
     TString dir = Form("zdcPlots");
     system(Form("mkdir -p %s", dir.Data()));

@@ -1,6 +1,6 @@
-#include "/Users/syang/Tools/Macro/headers.h"
-#include "/Users/syang/work/run2/upcDimuon/Utilities/Ntuple/VertexCompositeTree.h"
-#include "/Users/syang/work/run2/upcDimuon/common/funUtil.h"
+#include "/afs/ihep.ac.cn/users/z/zhangyu1/bishe/jpsiAnaCode/common/headers.h"
+#include "/afs/ihep.ac.cn/users/z/zhangyu1/bishe/jpsiAnaCode/common/VertexCompositeTree.h"
+#include "/afs/ihep.ac.cn/users/z/zhangyu1/bishe/jpsiAnaCode/common/funUtil.h"
 
 TH1D *hnEvts;
 TH3D *hVzvsVyvsVx;
@@ -66,11 +66,21 @@ TH3D *hTrigPosMuPhivsEtavsPtInpair;
 TH3D *hMthNegMuPhivsEtavsPtInpair;
 TH3D *hTrigNegMuPhivsEtavsPtInpair;
 
+TH1D *hEvtvsCostheta;
+TH1D *hEvtvsM_mumu;
+TH1D *hEvtvsk_max;
+TH1D *hEvtvsk_min;
+
 Bool_t   goodMcTrack(VertexCompositeTree& evtTree, const int icand);
 Bool_t   goodRcTrack(VertexCompositeTree& evtTree, const int icand);
 Bool_t   matchedTrack(Double_t genPt, Double_t genEta, Double_t genPhi, Double_t rcPt, Double_t rcEta, Double_t rcPhi);
 Double_t shiftDeltaPhi(Double_t dPhi);
 Double_t shiftToPi(Double_t dPhi);
+
+double_t etaToY(double_t eta, double_t mass, double_t pt);
+double_t yyToy_mumu(double_t y1, double_t y2);
+double_t PhotonEnergy(double_t y_mu_mu, double_t SysM_mumu);
+double_t m_mumu(double_t posPt, double_t posEta, double_t posPhi, double_t posy,double_t negPt, double_t negEta, double_t negPhi, double_t negy);
 
 void bookHistos();
 void writeHistos(TString fileName = "test");
@@ -81,7 +91,7 @@ void anaMcEvt(TString fileName = "GammaGamma")
 
     std::string inputFile;
     if(fileName.EqualTo("GammaGamma")){
-        inputFile = "../rootfiles/VertexCompositeTree_STARLIGHT_GGToMuMu_woPtCut_DiMuMC_20191122.root";
+        inputFile = "/publicfs/cms/user/tocheng/HeavyIon/UPC/2018A/dimuana_mc.root";
     }
     else if(fileName.EqualTo("GammaGamma_XnXn")){
         inputFile = "../rootfiles/VertexCompositeTree_STARLIGHT_GGToMuMu_XnXn_woPtCut_DiMuMC_20191125.root";
@@ -262,6 +272,24 @@ void anaMcEvt(TString fileName = "GammaGamma")
             Double_t asyPhi = 1 - TMath::Abs(shiftDeltaPhi(posFourMom_gen.DeltaPhi(negFourMom_gen))) / PI; //acoplanarity
             Double_t asyPt  = TMath::Abs((posFourMom_gen.Pt() - negFourMom_gen.Pt()) / (posFourMom_gen.Pt() + negFourMom_gen.Pt()));
 
+	    double_t posy_gen   = etaToY(posEta_gen, mass_gen, posPt_gen);
+            double_t negy_gen   = etaToY(negEta_gen, mass_gen, negPt_gen);
+            
+            double_t costheta = 0;
+            if (posy_gen > 0) {
+                costheta = tanh(0.5 * (posy_gen - negy_gen));
+            } else {
+                costheta = tanh(0.5 * (negy_gen - posy_gen));
+            }
+
+            double_t y_mumu = yyToy_mumu(posy_gen, negy_gen);
+
+            double_t SysM_mumu = m_mumu(posPt_gen, posEta_gen, posPhi_gen, posy_gen, negPt_gen, negEta_gen, negPhi_gen, negy_gen);
+
+            //from the final state muon pair, calculate the photon energy
+            double_t k_max = PhotonEnergy(y_mumu, SysM_mumu);
+            double_t k_min = PhotonEnergy(-y_mumu, SysM_mumu);
+
             TVector3 muMomDiff_gen = posFourMom_gen.Vect() - negFourMom_gen.Vect();
             TVector3 pairMom_gen = pairFourMom_gen.Vect();
             Double_t phiDiff_gen = shiftDeltaPhi(pairMom_gen.DeltaPhi(muMomDiff_gen));
@@ -397,6 +425,11 @@ void anaMcEvt(TString fileName = "GammaGamma")
             Double_t trigEff = 1 - (1 - hPosMu3DTrigEff->GetBinContent(posPtBin, posEtaBin, posPhiBin)) * (1 - hNegMu3DTrigEff->GetBinContent(negPtBin, negEtaBin, negPhiBin));
             Double_t totEff = trkEff * trigEff;
             hAsyPhivsM_EffCorr->Fill(mass, asyPhi, 1/totEff);
+
+            hEvtvsCostheta->Fill(costheta, 1/totEff);
+            hEvtvsM_mumu->Fill(SysM_mumu, 1/totEff);
+            hEvtvsk_max->Fill(k_max, 1/totEff);
+            hEvtvsk_min->Fill(k_min, 1/totEff);
         }
 
         hNRcMuvsNGenMu->Fill(csTree.candSize_gen()*2, nSoftMuon);
@@ -465,6 +498,12 @@ void bookHistos()
     hDeltaPhivsM_Gen   = new TH2D("hDeltaPhivsM_Gen", "hDeltaPhivsM_Gen; M_{#mu#mu} (GeV/c^{2}); #phi_{#mu^{+}+#mu^{-}} - #phi_{#mu^{+}-#mu^{-}}", mHistMassBins, mHistMassLow, mHistMassHi, 120, -PI, PI);
 
     hAsyPhivsPt_Gen     = new TH2D("hAsyPhivsPt_Gen", "hAsyPhivsPt_Gen; p_{T} (GeV/c); #alpha", 1000, 0, 100, mHistAsyPhiBins, mHistAsyPhiLow, mHistAsyPhiHi);
+
+    hEvtvsCostheta = new TH1D("hEvtvsCostheta", "hEvtvsCostheta; cos #theta", 100, -1, 1);
+    hEvtvsM_mumu = new TH1D("hEvtvsM_mumu", "hEvtvsM_mumu; M_{#mu#mu} (GeV/c^{2})", 52, 8, 60);
+    hEvtvsk_max = new TH1D("hEvtvsk_max", "hEvtvsk_max; k_{max} (GeV)", 52, 8, 60);
+    hEvtvsk_min = new TH1D("hEvtvsk_min", "hEvtvsk_min; k_{min} (GeV)", 100, 0, 100);
+
     for(Int_t ip=0; ip<nNeus; ip++){
         for(Int_t im=ip; im<nNeus; im++){
             hModifiedPairPt_Neu[ip][im] = new TH1D(Form("hModifiedPairPt_Neu%dn%dn", ip, im), "hModifiedPairPt; p_{T} (GeV/c)", 10000, mHistPtLow, mHistPtHi);
@@ -626,6 +665,12 @@ void writeHistos(TString fileName)
     hTnpDenEtavsPt->Write();
     hTnpPassEtavsPt->Write();
     hTnpFailEtavsPt->Write();
+   
+    hEvtvsCostheta->Write();
+    hEvtvsM_mumu->Write();
+    hEvtvsk_max->Write();
+    hEvtvsk_min->Write();
+
 
     fOut->Close();
 }
@@ -679,3 +724,45 @@ Double_t shiftToPi(Double_t dPhi)
 
     return deltaPhi;
 }
+
+double_t etaToY(double_t eta, double_t mass, double_t pt) 
+{
+    double_t theta = 2 * atan(exp(-eta));
+    double_t pz = pt / tan(theta); // 计算纵向动量
+    double_t energy = sqrt(pt * pt + pz * pz + mass * mass);
+    double_t rapidity = 0.5 * log((energy + pz) / (energy - pz));
+    return rapidity;
+
+}
+
+double_t yyToy_mumu(double_t y1, double_t y2) 
+{
+    return 0.5 * log((exp(y1) + exp(y2)) / (exp(-y1) + exp(-y2)));
+}
+
+double_t PhotonEnergy(double_t y_mu_mu, double_t SysM_mumu) 
+{
+    return 0.5 * SysM_mumu * exp(y_mu_mu); // 计算 k
+}
+
+double_t m_mumu(double_t posPt, double_t posEta, double_t posPhi, double_t posy,double_t negPt, double_t negEta, double_t negPhi, double_t negy) 
+{
+    double_t mass = 0.10566;  // 缪子静止质量 (GeV/c^2)
+    
+    // 计算动量分量和总能量
+    double_t posPz = posPt * sinh(posy);
+    double_t negPz = negPt * sinh(negy);
+    double_t posE = sqrt(posPt * posPt + posPz * posPz + mass * mass);
+    double_t negE = sqrt(negPt * negPt + negPz * negPz + mass * mass);
+    double_t posPx = posPt * cos(posPhi), posPy = posPt * sin(posPhi);
+    double_t negPx = negPt * cos(negPhi), negPy = negPt * sin(negPhi);
+
+    // 总能量与总动量
+    double_t totalE = posE + negE;
+    double_t totalPx = posPx + negPx, totalPy = posPy + negPy, totalPz = posPz + negPz;
+    double_t totalP2 = totalPx * totalPx + totalPy * totalPy + totalPz * totalPz;
+
+    return sqrt(totalE * totalE - totalP2); // 系统质量
+}
+
+
